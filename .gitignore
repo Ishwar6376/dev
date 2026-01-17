@@ -1,0 +1,38 @@
+# Node
+node_modules/
+client/node_modules/
+server/node_modules/
+agents/venv
+server/venv
+client/src/firebase/firebase.js
+agents/__pycache__
+agents/brain/__pycache__
+agents/brain/__init__.py
+server/config/gee-service-account.json
+server/vertexAiKey.json
+server/serviceAccountKey.json
+# Env
+.env
+.env.*
+.env.local
+
+# Build
+dist
+dist-ssr
+
+# Logs
+logs
+*.log
+
+# Editor
+.vscode/
+.idea/
+.DS_Store
+serviceAccountKey.json
+client/src/config.js
+vertexAiKey.json
+unknown*
+venv/
+sentinal/model
+sentinal/serviceAccountKey.json
+sentinal/__pycache__
