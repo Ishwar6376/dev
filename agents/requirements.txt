@@ -29,3 +29,6 @@ typing-extensions
 tiktoken
 #--Tokens---
 jwt
+
+Pillow
+google-generativeai
