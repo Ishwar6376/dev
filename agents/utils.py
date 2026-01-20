@@ -16,16 +16,21 @@ async def analyze_image_category(
 ) -> AgentAnalysis:
     """
     Sends image + optional user description to Gemini.
-    Enforces strict JSON output.
+    Enforces strict JSON output including a generated title.
     """
     context_text = "Analyze this image according to your instructions."
+
     if user_description:
-        context_text += f"\n\nUSER REPORT DESCRIPTION: '{user_description}'\n(Use this context if the image is unclear, but prioritize visual evidence.)"
+        context_text += f"\n\nUSER REPORT DESCRIPTION: '{user_description}'\n(Use this context to inform the title and reasoning, but prioritize visual evidence for the severity.)"
     formatting_instruction = """
     \nIMPORTANT: You must strictly output ONLY valid JSON. 
     Do not add Markdown formatting (like ```json). 
+    
+    Generate a concise 'title' (max 10 words) that summarizes the visual content and the user description.
+    
     The JSON structure must be:
     {
+      "title": "A short, descriptive summary of the incident",
       "confidence": 0.95,
       "severity": "HIGH", 
       "reasoning": "Detailed explanation here"
@@ -43,11 +48,11 @@ async def analyze_image_category(
     
     try:
         response = await llm.ainvoke([SystemMessage(content=final_system_prompt), message])
-        
         raw_content = response.content.replace("```json", "").replace("```", "").strip()
         data = json.loads(raw_content)
         
         return AgentAnalysis(
+            title=data.get("title", "Untitled Analysis"), 
             confidence=float(data.get("confidence", 0.0)),
             severity=SeverityLevel(data.get("severity", "LOW")), 
             reasoning=data.get("reasoning", "No reasoning provided")
@@ -56,6 +61,7 @@ async def analyze_image_category(
     except Exception as e:
         print(f" AI Analysis Failed: {e}")
         return AgentAnalysis(
+            title="Analysis Error",
             confidence=0.0, 
             severity=SeverityLevel.LOW, 
             reasoning=f"Error during analysis: {str(e)}"
