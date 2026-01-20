@@ -44,12 +44,9 @@ class LocationModel(BaseModel):
 
 
 # --- ENDPOINTS ---
-
-
-
 @app.post("/agent1")
 async def chat_endpoint(req: ChatRequest):
-    try:
+    try: 
         initial_state = {
             "roomId": req.roomId,
             "messages": req.messages,
