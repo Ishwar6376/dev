@@ -24,6 +24,7 @@ def finalizer_node(state: AgentState):
         return {
             "assigned_category": ReportCategory.UNCERTAIN,
             "aiAnalysis": "Could not identify any specific issue.",
+            "title":winner["data"].title,
             "severity": SeverityLevel.LOW,
             "route": "reports/uncertainReports"  
         }
@@ -33,6 +34,7 @@ def finalizer_node(state: AgentState):
         return {
             "assigned_category": ReportCategory.UNCERTAIN,
             "aiAnalysis": "The image provided does not clearly match any reportable category.",
+            "title":winner["data"].title,
             "severity": SeverityLevel.LOW,
             "route": "reports/uncertainReports"  
         }
@@ -43,5 +45,6 @@ def finalizer_node(state: AgentState):
         "assigned_category": winning_category,
         "severity": winner["data"].severity,
         "aiAnalysis": winner["data"].reasoning,
+        "title":winner["data"].title,
         "route": selected_route  
     }
