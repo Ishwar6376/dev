@@ -48,6 +48,7 @@ app.use("/api/interests", interestRoutes);
 app.use("/api/garbage", garbageRoutes);
 app.use("/api/jobs", jobRoutes);
 app.use("/api/alerts", setalertRoutes);
+
 /* ---------------- EXPORT ---------------- */
 app.use('/uploads', express.static('uploads'));
 app.use("/api/chats", chatRoutes);
@@ -56,7 +57,7 @@ app.use("/api/complaint-stats",complaintStatsRoutes);
 app.use("/api/complaint-history",complaintHistoryRoutes);
 app.use("/api/voice",voiceRoutes);
 app.use("/api/locality",localityRoutes)
-app.use("/api/reports",reportRoutes)
+// app.use("/api/reports",reportRoutes)
 
 app.get("/health", (req, res) => res.status(200).json({ message: "server is healthy" }));
 

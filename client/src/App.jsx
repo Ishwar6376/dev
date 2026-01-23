@@ -60,6 +60,15 @@ function App() {
         
         />
         
+
+        <Route
+          path="/track/:id"
+          element={
+            <ProtectedRoute>
+              <TrackReport />
+            </ProtectedRoute>
+          }
+        />
         <Route
           path="/administration/garbage"
           element={
@@ -252,6 +261,14 @@ function App() {
           element={
             <ProtectedRoute>
               <SurfaceHeatResult />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/ecosnap/reports"
+          element={
+            <ProtectedRoute>
+              <GarbageReports />
             </ProtectedRoute>
           }
         />
