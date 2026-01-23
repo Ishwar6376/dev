@@ -1,8 +1,8 @@
 import path from "path";
 import { fileURLToPath } from "url";
 import fs from "fs";
-import { runCoastalCheck } from "../gee/earth/coastal_erosion/landsat_coastal.js"; 
-import { db } from "../firebaseadmin/firebaseadmin.js"; 
+import { runCoastalCheck } from "../../gee/earth/coastal_erosion/landsat_coastal.js"; 
+import { db } from "../../firebaseadmin/firebaseadmin.js"; 
 
 
 

@@ -1,8 +1,8 @@
 import { fileURLToPath } from "url";
 import fs from "fs";
-import { runHeatCheck } from "../gee/earth/surfaceHeat/landsat_surface_temp.js";
+import { runHeatCheck } from "../../gee/earth/surfaceHeat/landsat_surface_temp.js";
 import path from "path"
-import { db } from "../firebaseadmin/firebaseadmin.js";
+import { db } from "../../firebaseadmin/firebaseadmin.js";
 
 
 const __filename = fileURLToPath(import.meta.url);

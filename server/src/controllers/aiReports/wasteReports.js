@@ -1,4 +1,4 @@
-import { db } from '../../firebaseadmin/firebaseadmin';
+import { db } from '../../firebaseadmin/firebaseadmin.js';
 
 export const saveWasteReport = async (req, res) => {
     try {

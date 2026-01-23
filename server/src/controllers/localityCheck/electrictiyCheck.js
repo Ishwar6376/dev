@@ -1,4 +1,4 @@
-import { db } from '../../firebaseadmin/firebaseadmin';
+import { db } from '../../firebaseadmin/firebaseadmin.js';
 
 function getDistanceInMeters(lat1, lon1, lat2, lon2) {
     const R = 6371e3; 
