@@ -35,12 +35,13 @@ class AgentState(TypedDict):
     location: Location
     address: str
     email: str
+    reportId: Optional[str]
     description:str
-    reportId:str
     geohash:str
-    locality_imageUrl=Optional[str]
-    locality_email=Optional[str]
-    locality_userId=Optional[str]
+    locality_imageUrl:Optional[str]
+    locality_email:Optional[str]
+    locality_userId:Optional[str]
+    locality_reportId:Optional[str]
     water_analysis: Optional[AgentAnalysis]
     waste_analysis: Optional[AgentAnalysis]
     infra_analysis: Optional[AgentAnalysis]
@@ -51,4 +52,5 @@ class AgentState(TypedDict):
     assigned_category: Optional[ReportCategory]
     status: ReportStatus
     route:str
+    updatedRoute:str
     tool:Literal["SAVE","UPDATE"]

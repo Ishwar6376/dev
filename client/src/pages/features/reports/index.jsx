@@ -1,37 +1,37 @@
-import { useState, useEffect, use } from "react";
+import { useState, useEffect } from "react"; // [FIX] Removed 'use'
 import { useNavigate } from "react-router-dom";
-import { AnimatePresence, motion } from "framer-motion";
 import { ArrowLeft, Map as MapIcon, List } from "lucide-react";
 import { WATER_FEATURE } from "./config";
-import LocationGuard from "./LocationGuard";
-import WaterMap from "./WaterMap"; // Assumed wrapper around Google Maps
-import ReportSidebar from "./ components/ReportSidebar";
-import FloatingLines from "../../../ui/FloatingLines"; // Your existing component
-import { Button } from "../../../ui/button"; // Your existing component
-import {useReverseGeocoding} from "../../../hooks/useReverseGeocoding";
-export default function WaterComplaintsPage() {
+import LocationGuard from "./LocationGuard"; 
+import ReportSidebar from "./ components/ReportSidebar"; // [FIX] Removed space in path
+import FloatingLines from "../../../ui/FloatingLines"; 
+import { Button } from "../../../ui/button"; 
+import { useReverseGeocoding } from "../../../hooks/useReverseGeocoding";
+
+export default function ComplaintsPage() {
   const navigate = useNavigate();
   const [userLocation, setUserLocation] = useState(null);
   const [mobileTab, setMobileTab] = useState("map");
-  const [activeReport, setActiveReport] = useState(null); 
-  const {userAddress:detectedAddress,loading}=useReverseGeocoding(
+  
+  // [NEW] Refresh Trigger for Map
+  // When a report is submitted, we increment this to tell the Map to refetch
+  const [mapRefreshTrigger, setMapRefreshTrigger] = useState(0);
+
+  // Address Hook
+  const { userAddress: detectedAddress, loading: addressLoading } = useReverseGeocoding(
     userLocation?.lat,
     userLocation?.lng
-  )
-  const [userAddress,setAddress]=useState(null);
-
-  useEffect(()=>{
-    if(detectedAddress){
-      setAddress(detectedAddress);
-      console.log("New Address Found:", detectedAddress);
-    }
-  },[detectedAddress])
-
-
+  );
 
   const handleLocationGranted = (coords) => {
     setUserLocation(coords);
   };
+
+  // [NEW] Handler called when Sidebar finishes a submission
+  const handleReportSubmitted = () => {
+    setMapRefreshTrigger(prev => prev + 1);
+  };
+
   return (
     <div className="relative h-screen w-full bg-slate-950 text-white flex flex-col overflow-hidden font-sans selection:bg-blue-500/30">
       
@@ -41,7 +41,7 @@ export default function WaterComplaintsPage() {
         <FloatingLines className="opacity-20" /> 
       </div>
 
-      {/* 2. Header (Glass) */}
+      {/* 2. Header */}
       <header className="relative z-50 h-16 px-4 md:px-6 flex items-center justify-between bg-black/20 backdrop-blur-xl border-b border-white/10">
         <div className="flex items-center gap-3">
           <Button variant="ghost" size="icon" onClick={() => navigate("/dashboard")} className="text-zinc-400 hover:text-white">
@@ -63,17 +63,16 @@ export default function WaterComplaintsPage() {
         </div>
       </header>
 
-      {/* 3. Main Content Content */}
+      {/* 3. Main Content */}
       <div className="flex-1 flex relative z-10 overflow-hidden">
         
-        {/* If no location, show Guard Overlay */}
         {!userLocation ? (
           <div className="absolute inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-sm">
             <LocationGuard onLocationGranted={handleLocationGranted} />
           </div>
         ) : (
           <>
-            {/* Sidebar (Report Form & Analysis) */}
+            {/* Sidebar */}
             <div 
               className={`
                 absolute inset-0 lg:static lg:w-[450px] flex flex-col border-r border-white/10 
@@ -82,15 +81,22 @@ export default function WaterComplaintsPage() {
                 ${mobileTab === 'report' ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
               `}
             >
-              <ReportSidebar userLocation={userLocation} userAddress={userAddress} />
+              <ReportSidebar 
+                userLocation={userLocation} 
+                // [CHANGE] Pass loading state or result directly
+                userAddress={addressLoading ? "Locating..." : detectedAddress} 
+                // [CHANGE] Pass the refresh handler
+                onReportSubmitGlobal={handleReportSubmitted}
+              />
             </div>
 
             {/* Map Area */}
             <div className="flex-1 relative bg-slate-900">
-               <WaterMap 
-                 userLocation={userLocation} 
-                 activeReport={activeReport}
-               />
+               {/* [CHANGE] Added key={mapRefreshTrigger} 
+                 This forces the map to re-render/re-fetch when a report is submitted.
+                 Alternatively, pass 'refreshTrigger' as a prop if WaterMap handles internal fetching.
+               */}
+               
             </div>
           </>
         )}

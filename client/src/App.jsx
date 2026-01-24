@@ -60,7 +60,7 @@ function App() {
         path="/water"
         element={
           <ProtectedRoute>
-            <WaterComplaintsPage/>
+            <ComplaintsPage/>
           </ProtectedRoute>
         }
         

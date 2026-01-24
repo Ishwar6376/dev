@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Camera, X, Loader2, CheckCircle2 } from "lucide-react";
+import { Camera, X, Loader2 } from "lucide-react";
 import { Button } from "../../../../ui/button";
 import { api } from "../../../../lib/api"; 
 import { useAuthStore } from "../../../../store/useAuthStore";
@@ -16,17 +16,12 @@ export default function ReportForm({ userLocation, userAddress, onSubmitSuccess 
   const { getAccessTokenSilently } = useAuth0(); 
   const user = useAuthStore((state) => state.user);
 
-  function generateReportId() {
-    return `RPT-${Date.now()}-${Math.random().toString(36).slice(2, 8).toUpperCase()}`;
-  }
-
   // --- 1. Cloudinary Upload ---
-  const uploadToCloudinary = async (file, currentReportId) => {
+  const uploadToCloudinary = async (file) => {
     setUploadStatus("uploading");
     const formData = new FormData();
     formData.append("file", file);
-    formData.append("userId", user?.id || "anonymous"); 
-    formData.append("reportId", currentReportId);
+    formData.append("userId", user?.id || "anonymous");
     formData.append("upload_preset", import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET);
 
     try {
@@ -49,10 +44,7 @@ export default function ReportForm({ userLocation, userAddress, onSubmitSuccess 
   const handleImageUpload = (e) => {
     const file = e.target.files[0];
     if (!file) return;
-
-    const currentReportId = generateReportId();
-
-    uploadToCloudinary(file, currentReportId);
+    uploadToCloudinary(file);
     const reader = new FileReader();
     reader.onloadend = () => {
       setImagePreview(reader.result); 
@@ -62,6 +54,12 @@ export default function ReportForm({ userLocation, userAddress, onSubmitSuccess 
 
   // --- 2. Final Submission ---
   const handleSubmit = async () => {
+    // ✅ SAFETY CHECK 1: Ensure location exists before trying to access .lat
+    if (!userLocation || !userLocation.lat || !userLocation.lng) {
+        alert("Location data is missing. Please wait or refresh.");
+        return;
+    }
+
     if (!imageUrl) {
         alert("Please wait for the image upload to complete.");
         return;
@@ -70,22 +68,26 @@ export default function ReportForm({ userLocation, userAddress, onSubmitSuccess 
     setStep("submitting");
 
     try {
-      const token = await getAccessTokenSilently();
+      const token = await getAccessTokenSilently({
+        authorizationParams: {
+          audience: import.meta.env.VITE_AUTH0_AUDIENCE, // Ensure this ENV variable exists
+          scope: "openid profile email"
+        }
+      });
 
-      // [CHANGED] Level 7 = Approx 150m x 150m blocks.
-      // This is the closest robust size to your 300m request.
+      // [NOTE] Level 7 = Approx 150m x 150m blocks.
       const geoHashId = geohash.encode(userLocation.lat, userLocation.lng, 7);
 
       const payload = {
           imageUrl: imageUrl,           
           description: description || "", 
-          location: userLocation,
+          location: userLocation, 
           geohash: geoHashId, 
-          address: userAddress,         
+          address: userAddress || "Unknown Location",         
           status: "INITIATED",          
       };
 
-      console.log("Handoff to Backend with Geohash (L7):", payload);
+      console.log("Handoff to AI Orchestrator:", payload);
       
       const response = await api.post(
         `${import.meta.env.VITE_API_PYTHON_URL}/reports`, 
@@ -100,13 +102,14 @@ export default function ReportForm({ userLocation, userAddress, onSubmitSuccess 
       if (response.status === 200 || response.status === 201) {
         setStep("submitted");
         if (onSubmitSuccess) onSubmitSuccess(response.data);
+        
         setTimeout(() => {
           setStep("idle");
           setImagePreview(null);
           setImageUrl(null);
           setDescription("");
           setUploadStatus("idle");
-        }, 2000);
+        }, 2500); 
       } else {
         throw new Error("Backend responded with error");
       }
@@ -120,18 +123,23 @@ export default function ReportForm({ userLocation, userAddress, onSubmitSuccess 
   if (step === "submitted") {
     return (
       <div className="h-full flex flex-col items-center justify-center space-y-4 animate-in fade-in zoom-in duration-300">
-        <div className="w-16 h-16 bg-green-500/20 rounded-full flex items-center justify-center border border-green-500/50">
-          <CheckCircle2 className="w-8 h-8 text-green-400" />
+        <div className="w-16 h-16 bg-blue-500/20 rounded-full flex items-center justify-center border border-blue-500/50 relative">
+          <div className="absolute inset-0 rounded-full bg-blue-500/20 animate-ping" />
+          <Loader2 className="w-8 h-8 text-blue-400 animate-spin relative z-10" />
         </div>
         <div className="text-center">
-          <h3 className="text-xl font-bold text-white">Report Sent</h3>
-          <p className="text-zinc-400 text-sm">Our AI Agents are processing your report.</p>
+          <h3 className="text-xl font-bold text-white">Report Received</h3>
+          <p className="text-zinc-400 text-sm mt-1">
+            Orchestrator is analyzing severity<br/>& assigning category...
+          </p>
         </div>
       </div>
     );
   }
 
-  const isReadyToSubmit = imagePreview && uploadStatus === 'done';
+  // ✅ SAFETY CHECK 2: Require location for the button to be active
+  const isLocationReady = userLocation && userLocation.lat && userLocation.lng;
+  const isReadyToSubmit = imagePreview && uploadStatus === 'done' && isLocationReady;
 
   return (
     <div className="space-y-6">
@@ -218,6 +226,8 @@ export default function ReportForm({ userLocation, userAddress, onSubmitSuccess 
             </span>
           ) : uploadStatus === 'uploading' ? (
              <span className="flex items-center gap-2">Uploading Image...</span>
+          ) : !isLocationReady ? (
+             "Waiting for Location..."
           ) : (
              "Submit Report"
           )}
