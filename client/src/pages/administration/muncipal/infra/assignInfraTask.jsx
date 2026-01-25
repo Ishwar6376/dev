@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from "react";
-// UPDATE 1: Import useSearchParams
 import { useParams, useNavigate, useLocation, useSearchParams } from "react-router-dom"; 
 import { getDatabase, ref, onValue, off } from "firebase/database";
 import { 
@@ -14,17 +13,16 @@ import {
 import { api } from "@/lib/api"; 
 import { useAuth0 } from "@auth0/auth0-react";
 
-export default function AssignTask() {
+export default function AssignInfraTask() {
   const { geoHash } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
   const { getAccessTokenSilently } = useAuth0();
 
-  // UPDATE 2: Get Report ID from URL
   const [searchParams] = useSearchParams();
   const reportIdFromUrl = searchParams.get("reportId");
 
-  // Fallback to location state for pre-filled text (Title/Desc)
+  
   const prefill = location.state?.prefill || {};
 
   const [staffList, setStaffList] = useState([]);
@@ -39,16 +37,17 @@ export default function AssignTask() {
     priority: prefill.priority || "MEDIUM",
     deadline: "",
     address: prefill.address || "Zone Center",
-    lat: prefill.location.lat, 
-    lng: prefill.location.lng,
-    reporterEmail:prefill.email
-
+    lng: prefill.location.lng ,
+    lat: prefill.location.lat , 
+    reporterEmail:prefill.email,
+    imageUrl:prefill.imageUrl
   });
 
   
   useEffect(() => {
     const db = getDatabase();
-    const zoneRef = ref(db, `staff/waste/${geoHash}`);
+    const zoneRef = ref(db, `staff/infra/${geoHash}`);
+    console.log("ZOne ref",zoneRef)
     const listener = onValue(zoneRef, (snapshot) => {
         const data = snapshot.val();
         setStaffList(data ? Object.entries(data).map(([k, v]) => ({ id: k.replace('_', '|'), ...v })) : []);

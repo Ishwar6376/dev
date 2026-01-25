@@ -34,6 +34,7 @@ export default function WasteAdmin() {
     const fetchZones = async () => {
       try {
         const res = await api.get("/api/municipal/waste/reports");
+        console.log(res)
         if (res.data && res.data.zones) {
           setZones(res.data.zones);
         } else {
@@ -49,9 +50,7 @@ export default function WasteAdmin() {
     fetchZones();
   }, []);
 
-  // --- SORTING & FILTERING LOGIC ---
   
-  // 1. Priority Map for Sorting (Critical is lowest number = top of list)
   const priorityMap = {
     "CRITICAL": 0,
     "HIGH": 1,

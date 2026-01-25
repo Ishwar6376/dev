@@ -69,9 +69,9 @@ export const assignTask = async (req, res) => {
       title, description, priority, deadline, 
       assignedTo, assignedToName, zoneGeohash, location,
       reportId, email: reporterEmail, department,
-      reportGeohash
+      reportGeohash,imageUrl
     } = req.body;
-
+    
     const assignedBy = req.auth?.payload?.sub || req.user?.sub; 
 
     if (!assignedTo || !title) return res.status(400).json({ message: "Missing required fields." });
@@ -91,6 +91,7 @@ export const assignTask = async (req, res) => {
       reportId: reportId || null, 
       reporterEmail: reporterEmail || null,
       createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      imageUrl:imageUrl,
       deadline: deadline ? admin.firestore.Timestamp.fromDate(new Date(deadline)) : null
     };
 

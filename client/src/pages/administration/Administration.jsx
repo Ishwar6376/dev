@@ -60,7 +60,7 @@ export default function CityAdminHub() {
       title: "Infrastructure",
       count: "12 Issues",
       icon: HardHat,
-      route: "/administration/municipal/infrastructure",
+      route: "/administration/municipal/infra",
       theme: "orange"
     },
     {

@@ -19,8 +19,8 @@ import {
   ChevronRight
 } from "lucide-react";
 
-import { useAuthStore } from "../../../../store/useAuthStore";
-import { api } from "../../../../lib/api.js"; // Importing the API client
+import { useAuthStore } from "@/store/useAuthStore";
+import { api } from "@/lib/api.js"; // Importing the API client
 
 export default function InfraAdmin() {
   const navigate = useNavigate();
@@ -32,16 +32,16 @@ export default function InfraAdmin() {
   const [loading, setLoading] = useState(true);
   const [selectedZone, setSelectedZone] = useState(null);
   
-  // Tab State
-  const [activeTab, setActiveTab] = useState("current"); // current | assigned | resolved
 
-  // 1. FETCH DATA FROM API (Same structure as Waste)
+  const [activeTab, setActiveTab] = useState("current"); 
+
+ 
   useEffect(() => {
     const fetchZones = async () => {
       try {
-        // Updated Endpoint for Infrastructure
-        const res = await api.get("/api/municipal/infrastructure/reports");
         
+        const res = await api.get("/api/municipal/infra/reports");
+        console.log(res);
         if (res.data && res.data.zones) {
           setZones(res.data.zones);
         } else {
@@ -58,7 +58,7 @@ export default function InfraAdmin() {
     fetchZones();
   }, []);
 
-  // --- SORTING & FILTERING LOGIC ---
+  
   const priorityMap = { "CRITICAL": 0, "HIGH": 1, "MEDIUM": 2, "LOW": 3 };
 
   const { currentReports, assignedReports, resolvedReports } = useMemo(() => {
@@ -341,7 +341,7 @@ export default function InfraAdmin() {
                                     {/* Universal Assignment Logic */}
                                     {activeTab === 'current' && (
                                         <button 
-                                            onClick={() => navigate(`/assign/waste/${selectedZone.geohash}`, {
+                                            onClick={() => navigate(`/assign/infra/${selectedZone.geohash}`, {
                                                 state: {
                                                     prefill: {
                                                         reportId: report.id || report.reportId,
@@ -350,7 +350,7 @@ export default function InfraAdmin() {
                                                         address: report.address,
                                                         priority: report.severity,
                                                         imageUrl: report.imageUrl,
-                                                        department: "infrastructure", // <--- Universal Logic
+                                                        department: "infrastructure",
                                                         reportGeohash: report.geohash,
                                                         location: report.location,
                                                         reporterEmail: report.email

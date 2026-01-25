@@ -41,8 +41,8 @@ export default function AssignTask() {
     address: prefill.address || "Zone Center",
     lat: prefill.location.lat, 
     lng: prefill.location.lng,
+    imageUrl:prefill.imageUrl,
     reporterEmail:prefill.email
-
   });
 
   

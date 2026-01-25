@@ -28,13 +28,14 @@ import WomenSafetyAdmin from "./pages/administration/women/WomenSafetyAdmin";
 import WomenSafetyZoneDetails from "./pages/administration/women/WomenSafetyZoneDetails";
 import WomenSafetyRoom from "./pages/administration/women/WomenSafetyRoom"
 import GarbageAdmin from "./pages/administration/garbage/garbage";
-import WaterComplaintsPage from "./pages/features/water/index"
 import GarbageReports from "./pages/reports/garbage/garbageReport";
 import TrackReport from "./pages/reports/track/TrackReports";
 import InfraAdmin from "./pages/administration/muncipal/infra/infra";
 import WasteAdmin from "./pages/administration/muncipal/waste/waste"
 import WasteStaffDashboard from "./pages/staff/waste/wasteStaff";
 import AssignTask from "@/pages/administration/muncipal/waste/assignTask"
+import InfraStaffDashboard from "./pages/staff/infra/infraStaff";
+import AssignInfraTask from "./pages/administration/muncipal/infra/assignInfraTask";
 
 function App() {
   const location = useLocation();
@@ -55,17 +56,7 @@ function App() {
               <CivicHub />
             </ProtectedRoute>
           }
-        />
-        <Route
-        path="/water"
-        element={
-          <ProtectedRoute>
-            <ComplaintsPage/>
-          </ProtectedRoute>
-        }
-        
-        />
-        
+        />        
 
         <Route
           path="/track/:id"
@@ -295,6 +286,14 @@ function App() {
             </ProtectedRoute>
           }
         />
+        <Route
+          path="/administration/municipal/infra"
+          element={
+            <ProtectedRoute >
+              <InfraAdmin />
+            </ProtectedRoute>
+          }
+        />
 
           {/* staff  */}
           <Route
@@ -305,12 +304,28 @@ function App() {
             </ProtectedRoute>
           }
         />
+          <Route
+          path="/staff/infra"
+          element={
+            <ProtectedRoute >
+              < InfraStaffDashboard/>
+            </ProtectedRoute>
+          }
+        />
 
         <Route
           path="/assign/waste/:geoHash"
           element={
             <ProtectedRoute >
               <AssignTask />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/assign/infra/:geoHash"
+          element={
+            <ProtectedRoute >
+              <AssignInfraTask />
             </ProtectedRoute>
           }
         />
