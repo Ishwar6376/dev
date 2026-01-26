@@ -1,9 +1,9 @@
-import { useState, useEffect } from "react"; // [FIX] Removed 'use'
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, Map as MapIcon, List } from "lucide-react";
 import { WATER_FEATURE } from "./config";
 import LocationGuard from "./LocationGuard"; 
-import ReportSidebar from "./ components/ReportSidebar"; // [FIX] Removed space in path
+import ReportSidebar from "./ components/ReportSidebar"; 
 import FloatingLines from "../../../ui/FloatingLines"; 
 import { Button } from "../../../ui/button"; 
 import { useReverseGeocoding } from "../../../hooks/useReverseGeocoding";
@@ -13,11 +13,8 @@ export default function ComplaintsPage() {
   const [userLocation, setUserLocation] = useState(null);
   const [mobileTab, setMobileTab] = useState("map");
   
-  // [NEW] Refresh Trigger for Map
-  // When a report is submitted, we increment this to tell the Map to refetch
   const [mapRefreshTrigger, setMapRefreshTrigger] = useState(0);
 
-  // Address Hook
   const { userAddress: detectedAddress, loading: addressLoading } = useReverseGeocoding(
     userLocation?.lat,
     userLocation?.lng
@@ -27,7 +24,6 @@ export default function ComplaintsPage() {
     setUserLocation(coords);
   };
 
-  // [NEW] Handler called when Sidebar finishes a submission
   const handleReportSubmitted = () => {
     setMapRefreshTrigger(prev => prev + 1);
   };
@@ -35,31 +31,39 @@ export default function ComplaintsPage() {
   return (
     <div className="relative h-screen w-full bg-slate-950 text-white flex flex-col overflow-hidden font-sans selection:bg-blue-500/30">
       
-      {/* 1. Global Ambient Background */}
+      {/* 1. Global Ambient Background (Gradient ONLY - No FloatingLines here) */}
       <div className="fixed inset-0 z-0 pointer-events-none">
         <div className="absolute inset-0 bg-gradient-to-br from-slate-950 via-blue-950/20 to-slate-950" />
-        <FloatingLines className="opacity-20" /> 
       </div>
 
-      {/* 2. Header */}
-      <header className="relative z-50 h-16 px-4 md:px-6 flex items-center justify-between bg-black/20 backdrop-blur-xl border-b border-white/10">
-        <div className="flex items-center gap-3">
-          <Button variant="ghost" size="icon" onClick={() => navigate("/dashboard")} className="text-zinc-400 hover:text-white">
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
-          <div className="flex items-center gap-2">
-            <div className={`p-2 rounded-lg ${WATER_FEATURE.theme.bgAccent}`}>
-                <WATER_FEATURE.icons.main className="h-5 w-5 text-blue-400" />
+      {/* 2. Header (Now includes FloatingLines) */}
+      <header className="relative z-50 h-16 bg-black/20 backdrop-blur-xl border-b border-white/10 overflow-hidden">
+        
+        {/* Floating Lines for Header */}
+        <div className="absolute inset-0 opacity-20 pointer-events-none">
+            <FloatingLines />
+        </div>
+
+        {/* Header Content */}
+        <div className="relative z-10 h-full px-4 md:px-6 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+            <Button variant="ghost" size="icon" onClick={() => navigate("/dashboard")} className="text-zinc-400 hover:text-white hover:bg-white/10">
+                <ArrowLeft className="h-5 w-5" />
+            </Button>
+            <div className="flex items-center gap-2">
+                <div className={`p-2 rounded-lg ${WATER_FEATURE.theme.bgAccent} border border-blue-500/20`}>
+                    <WATER_FEATURE.icons.main className="h-5 w-5 text-blue-400" />
+                </div>
+                <div>
+                <h1 className="text-lg font-bold tracking-tight text-white leading-none">
+                    {WATER_FEATURE.title}
+                </h1>
+                <p className="text-[10px] text-zinc-400 uppercase tracking-wider font-medium mt-0.5">
+                    {WATER_FEATURE.subtitle}
+                </p>
+                </div>
             </div>
-            <div>
-              <h1 className="text-lg font-bold tracking-tight text-white leading-none">
-                {WATER_FEATURE.title}
-              </h1>
-              <p className="text-[10px] text-zinc-400 uppercase tracking-wider font-medium">
-                {WATER_FEATURE.subtitle}
-              </p>
             </div>
-          </div>
         </div>
       </header>
 
@@ -72,31 +76,35 @@ export default function ComplaintsPage() {
           </div>
         ) : (
           <>
-            {/* Sidebar */}
+            {/* Sidebar Container (Now includes FloatingLines) */}
             <div 
               className={`
-                absolute inset-0 lg:static lg:w-[450px] flex flex-col border-r border-white/10 
-                bg-slate-950/90 lg:bg-black/40 backdrop-blur-3xl z-30 lg:z-20 
+                absolute inset-0 lg:static lg:w-[450px] flex flex-col 
+                bg-slate-950/95 lg:bg-black/40 backdrop-blur-3xl 
+                border-r border-white/10 z-30 lg:z-20 relative overflow-hidden
                 transition-transform duration-300 ease-[cubic-bezier(0.25,0.8,0.25,1)]
                 ${mobileTab === 'report' ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
               `}
             >
-              <ReportSidebar 
-                userLocation={userLocation} 
-                // [CHANGE] Pass loading state or result directly
-                userAddress={addressLoading ? "Locating..." : detectedAddress} 
-                // [CHANGE] Pass the refresh handler
-                onReportSubmitGlobal={handleReportSubmitted}
-              />
+              {/* Floating Lines for Sidebar */}
+              <div className="absolute inset-0 opacity-20 pointer-events-none">
+                 <FloatingLines />
+              </div>
+
+              {/* Sidebar Content */}
+              <div className="relative z-10 h-full">
+                <ReportSidebar 
+                    userLocation={userLocation} 
+                    userAddress={addressLoading ? "Locating..." : detectedAddress} 
+                    onReportSubmitGlobal={handleReportSubmitted}
+                />
+              </div>
             </div>
 
-            {/* Map Area */}
-            <div className="flex-1 relative bg-slate-900">
-               {/* [CHANGE] Added key={mapRefreshTrigger} 
-                 This forces the map to re-render/re-fetch when a report is submitted.
-                 Alternatively, pass 'refreshTrigger' as a prop if WaterMap handles internal fetching.
-               */}
-               
+            {/* Map Area (Clean - No Lines) */}
+            <div className="flex-1 relative bg-slate-900/50">
+               {/* Map Placeholder or Component */}
+               {/* <WaterMap key={mapRefreshTrigger} userLocation={userLocation} refreshTrigger={mapRefreshTrigger} /> */}
             </div>
           </>
         )}

@@ -9,7 +9,7 @@ import {
   LogOut, 
   Shield, 
   Briefcase, 
-  Recycle,
+  Megaphone, // Imported Megaphone for Complaints
   Heart
 } from "lucide-react";
 
@@ -24,12 +24,12 @@ const FEATURES = [
     color: "pink"
   },
   {
-    id: "garbage",
-    title: "EcoSnap",
-    description: "Keep your city clean by reporting garbage with a single click. AI validates and tracks cleanup.",
-    route: "/ecosnap",
-    icon: Recycle,
-    color: "green"
+    id: "complaints",
+    title: "CivicHub",
+    description: "Report civic issues like water, roads, and sanitation. Track resolution in real-time.",
+    route: "/water",
+    icon: Megaphone,
+    color: "cyan"
   },
   {
     id: "jobs",
