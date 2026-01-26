@@ -84,7 +84,7 @@ export default function CityAdminHub() {
       title: "Electricity",
       count: "Grid Online",
       icon: Zap,
-      route: "/administration/electricity",
+      route: "/administration/municipal/electricity",
       theme: "violet"
     },
     {

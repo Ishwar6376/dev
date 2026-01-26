@@ -36,14 +36,14 @@ import WasteStaffDashboard from "./pages/staff/waste/wasteStaff";
 import AssignTask from "@/pages/administration/muncipal/waste/assignTask"
 import InfraStaffDashboard from "./pages/staff/infra/infraStaff";
 import AssignInfraTask from "./pages/administration/muncipal/infra/assignInfraTask";
-import ElectricityAdmin from "./pages/administration//electricity/electricity";
+import WaterStaffDashboard from "./pages/staff/water/waterStaff";
+import WaterAdmin from "./pages/administration/muncipal/water/water";
+import AssignWaterTask from "./pages/administration/muncipal/water/assignWaterTask";
 import ElectricityStaffDashboard from "./pages/staff/electricity/ElectricityStaff";
-import AssignElectricityTask from "./pages/administration/electricity/assignTask";
+import ElectricityAdmin from "./pages/administration/muncipal/electricity/electricity";
+import AssignElectricityTask from "./pages/administration/muncipal/electricity/assignTask";
 
 
-import WaterStaffDashboard from "./pages/staff/water/waterStaff"
-import WaterAdmin from "./pages/administration/muncipal/water/water"
-import AssignWaterTask from "./pages/administration/muncipal/water/assignWaterTask"
  
 
 function App() {
@@ -304,14 +304,6 @@ function App() {
           }
         />
         <Route
-         path="/administration/electricity"
-            element={
-             <ProtectedRoute>
-              <ElectricityAdmin />
-            </ProtectedRoute>
-          }
-/>
-
           path="/administration/municipal/water"
           element={
             <ProtectedRoute >
@@ -319,6 +311,15 @@ function App() {
             </ProtectedRoute>
           }
         />
+           <Route
+              path="/administration/municipal/electricity"
+              element={
+                <ProtectedRoute>
+                  <ElectricityAdmin />
+                </ProtectedRoute>
+              }
+            />
+
 
           {/* staff  */}
           <Route
@@ -345,6 +346,16 @@ function App() {
             </ProtectedRoute>
           }
         />
+       <Route
+          path="/staff/electricity"
+          element={
+            <ProtectedRoute>
+              <ElectricityStaffDashboard />
+            </ProtectedRoute>
+          }
+        />
+
+
 
         <Route
           path="/assign/waste/:geoHash"
@@ -362,25 +373,6 @@ function App() {
             </ProtectedRoute>
           }
         />
-     // Electricity Staff Dashboard
-        <Route
-           path="/staff/electricity"
-             element={
-               <ProtectedRoute>
-                   <ElectricityStaffDashboard />
-                  </ProtectedRoute>
-                }
-              />
-
-              // Assign Electricity Task
-         <Route
-           path="/assign/electricity/:geoHash"
-             element={
-                  <ProtectedRoute>
-                    <AssignElectricityTask />
-                  </ProtectedRoute>
-                }
-              />
         <Route
           path="/assign/water/:geoHash"
           element={
@@ -389,6 +381,16 @@ function App() {
             </ProtectedRoute>
           }
         />
+       <Route
+            path="/assign/electricity/:geoHash"
+            element={
+              <ProtectedRoute>
+                <AssignElectricityTask />
+              </ProtectedRoute>
+            }
+          />
+
+
 
 
 
