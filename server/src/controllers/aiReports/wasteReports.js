@@ -9,6 +9,8 @@ export const saveWasteReport = async (req, res) => {
       return res.status(400).json({ message: "Missing userId or geohash in payload" });
     }
 
+    
+
     const reportDocRef = db
       .collection('wasteReports')
       .doc(geohash)

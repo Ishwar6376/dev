@@ -139,10 +139,10 @@ function App() {
         />
 
         <Route
-        path="/ecosnap"
+        path="/reports"
         element={
           <ProtectedRoute>
-            <GarbageFeature />
+            <ComplaintsPage/>
           </ProtectedRoute>
         }
       />
@@ -154,14 +154,15 @@ function App() {
             </ProtectedRoute>
           }
         />
-        <Route
+        //purana garbage wala //
+        {/*<Route
           path="/garbage"
           element={
             <ProtectedRoute>
               <Garbage />
             </ProtectedRoute>
           }
-        />
+        />*/}
        <Route
         path="/ngo/*"
         element={

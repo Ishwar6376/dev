@@ -9,11 +9,10 @@ import {
   LogOut, 
   Shield, 
   Briefcase, 
-  Recycle,
-  Heart
+  Heart,
+  Landmark
 } from "lucide-react";
 
-// Updated Features with specific Colors and Icon Components
 const FEATURES = [
   {
     id: "women-safety",
@@ -24,13 +23,14 @@ const FEATURES = [
     color: "pink"
   },
   {
-    id: "garbage",
-    title: "EcoSnap",
-    description: "Keep your city clean by reporting garbage with a single click. AI validates and tracks cleanup.",
-    route: "/ecosnap",
-    icon: Recycle,
-    color: "green"
+    id: "reports",
+    title: "Civic Connect",
+    description: "Submit grievances related to infrastructure, electricity, water, and waste management",
+    route: "/reports",
+    icon: Landmark,
+    color: "blue"
   },
+
   {
     id: "jobs",
     title: "StreetGig",

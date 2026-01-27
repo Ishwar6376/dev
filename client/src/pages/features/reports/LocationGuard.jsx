@@ -1,12 +1,16 @@
 import { useState } from "react";
-import { MapPin, Shield, Loader2, AlertCircle } from "lucide-react";
+import { MapPin, Loader2, AlertCircle } from "lucide-react";
 import { Button } from "../../../ui/button";
+import { GRIEVANCE_CONFIG } from "./config"; 
 
 export default function LocationGuard({ onLocationGranted }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  
+  // Destructure from new config
+  const { theme, icons } = GRIEVANCE_CONFIG;
 
-const requestLocation = () => {
+  const requestLocation = () => {
     setLoading(true);
     setError(null);
 
@@ -19,10 +23,7 @@ const requestLocation = () => {
     navigator.geolocation.getCurrentPosition(
         (position) => {
             setTimeout(() => {
-                // 1. Stop loading
                 setLoading(false);
-                
-                // 2. Safely call the parent function
                 if (onLocationGranted) {
                     onLocationGranted({
                         lat: position.coords.latitude,
@@ -32,70 +33,73 @@ const requestLocation = () => {
             }, 800);
         },
         (err) => {
-            console.error("Location Error:", err);
-            setLoading(false); // <--- You handled it correctly here, but missed it in success!
-            
+            setLoading(false);
             if (err.code === 1) {
-                setError("Permission denied. Please allow location access in your browser settings.");
+                setError("Permission denied. Location access is required to verify reports.");
             } else if (err.code === 2) {
                 setError("Position unavailable. Please check your GPS signal.");
-            } else if (err.code === 3) {
-                setError("Location request timed out.");
             } else {
                 setError("An unknown error occurred.");
             }
         },
-        {
-            enableHighAccuracy: true, 
-            timeout: 10000,
-            maximumAge: 0
-        }
+        { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
     );
   };
 
   return (
-    <div className="w-full max-w-sm p-8 bg-black/60 backdrop-blur-2xl border border-white/10 rounded-3xl shadow-2xl flex flex-col items-center text-center relative overflow-hidden animate-in zoom-in-95 duration-300">
+    // Updated container to match Dark Mode "Slate" theme
+    <div className={`w-full max-w-sm p-8 bg-zinc-900/80 backdrop-blur-xl border ${theme.border} rounded-2xl shadow-2xl shadow-black/50 flex flex-col items-center text-center relative overflow-hidden animate-in fade-in zoom-in-95 duration-500`}>
       
-      {/* Background Glow */}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-40 h-40 bg-blue-500/20 blur-[60px] rounded-full pointer-events-none" />
+      {/* Subtle top light leak instead of Aqua blobs */}
+      <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent opacity-50" />
 
-      <div className="w-16 h-16 bg-gradient-to-tr from-blue-600 to-cyan-400 rounded-2xl flex items-center justify-center mb-6 shadow-lg shadow-blue-500/20 relative z-10">
+      {/* Header Icon */}
+      <div className={`w-16 h-16 bg-gradient-to-br ${theme.gradient} border border-white/5 rounded-xl flex items-center justify-center mb-6 shadow-lg relative z-10`}>
         {loading ? (
-           <Loader2 className="w-8 h-8 text-white animate-spin" />
+           <Loader2 className="w-7 h-7 text-white animate-spin" />
         ) : (
-           <MapPin className="w-8 h-8 text-white" />
+           <MapPin className="w-7 h-7 text-white" />
         )}
       </div>
 
-      <h2 className="text-2xl font-bold text-white mb-2 relative z-10">Enable Location</h2>
-      <p className="text-zinc-400 text-sm mb-6 leading-relaxed relative z-10">
-        We need your precise coordinates to pinpoint infrastructure issues and route AI agents accurately.
+      <h2 className="text-xl font-semibold text-white mb-2 relative z-10 tracking-tight">
+        Confirm Location
+      </h2>
+      <p className="text-zinc-400 text-sm mb-8 leading-relaxed relative z-10 px-4">
+        To file a report for <span className="text-zinc-200 font-medium">Infrastructure, Waste, Power, or Water</span>, we need your precise coordinates.
       </p>
 
-      {/* Error Message Display */}
+      {/* Categories Bar */}
+      <div className="flex justify-center gap-6 mb-8 w-full border-y border-white/5 py-4">
+         {[icons.infra, icons.waste, icons.power, icons.water].map((Icon, i) => (
+             <Icon key={i} className="w-5 h-5 text-zinc-500" />
+         ))}
+      </div>
+
+      {/* Error Message */}
       {error && (
-        <div className="mb-6 flex items-center gap-2 text-xs text-red-400 bg-red-500/10 p-3 rounded-lg border border-red-500/20 relative z-10">
-            <AlertCircle className="w-4 h-4 shrink-0" />
+        <div className="mb-6 flex items-start gap-3 text-xs text-red-400 bg-red-950/30 p-3 rounded-lg border border-red-500/20 relative z-10 w-full">
+            <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
             <span className="text-left font-medium">{error}</span>
         </div>
       )}
 
-      <div className="w-full space-y-3 relative z-10">
+      <div className="w-full space-y-4 relative z-10">
         <Button 
             onClick={requestLocation}
-            className={`w-full h-12 font-bold text-base transition-all ${
+            className={`w-full h-11 font-medium text-sm transition-all ${
                 loading 
                 ? 'bg-zinc-800 text-zinc-500 cursor-not-allowed' 
-                : 'bg-white text-black hover:bg-zinc-200'
+                : `bg-white text-black hover:bg-zinc-200`
             }`}
             disabled={loading}
         >
-            {loading ? "Acquiring Signal..." : "Allow Access"}
+            {loading ? "Verifying..." : "Allow Access & Continue"}
         </Button>
         
-        <div className="flex items-center justify-center gap-1.5 text-zinc-500">
-            <Shield className="w-3 h-3" />
-            <span className="text-[10px] font-medium uppercase tracking-wide">Encrypted & Private</span>
+        <div className="flex items-center justify-center gap-2 text-zinc-600">
+            <icons.main className="w-3 h-3" />
+            <span className="text-[10px] uppercase tracking-widest font-semibold">Official Grievance Portal</span>
         </div>
       </div>
     </div>
