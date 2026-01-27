@@ -98,6 +98,14 @@ function App() {
           }
         />
         <Route
+          path="/water"
+          element={
+            <ProtectedRoute>
+              <ComplaintsPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
           path="/administration/womenSafety/:geohashId"
           element={
             <ProtectedRoute>
