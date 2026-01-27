@@ -12,7 +12,7 @@ import {
   Heart,
   Landmark
 } from "lucide-react";
-
+import { FireSOSButton } from "./fireAlert.jsx"
 const FEATURES = [
   {
     id: "women-safety",
@@ -87,6 +87,11 @@ export default function App() {
           </h1>
         </div>
 
+        {/*CENTER:The SOS button */}
+        <div>
+          <FireSOSButton/>
+        </div>
+
         {/* User Profile */}
         <div className="flex items-center gap-4">
           {storedUser && (
@@ -107,6 +112,7 @@ export default function App() {
           >
             <LogOut className="w-5 h-5 transition-transform group-hover:-translate-x-0.5" />
           </button>
+
         </div>
       </header>
 
