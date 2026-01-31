@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
 import {
-  MapPin,
   Clock,
   Camera,
   CheckCircle,
@@ -62,7 +61,6 @@ export default function ElectricityStaffDashboard() {
       const geohash = ngeohash.encode(latitude, longitude, 5);
       const sanitizedUserId = user.sub.replace("|", "_");
 
-      // Specific path for electricity staff
       const path = `staff/electricity/${geohash}/${sanitizedUserId}`;
       const userRef = ref(db, path);
 
@@ -141,7 +139,7 @@ export default function ElectricityStaffDashboard() {
   return (
     <div className="min-h-screen bg-slate-50 pb-20 font-sans max-w-md mx-auto shadow-2xl overflow-hidden relative">
       
-      {/* HEADER - Styled like WasteStaff */}
+      {/* HEADER */}
       <div className="bg-slate-900 text-white p-6 rounded-b-[2rem] shadow-lg sticky top-0 z-10">
         <div className="flex justify-between items-start mb-6">
           <div>
@@ -164,7 +162,6 @@ export default function ElectricityStaffDashboard() {
           </button>
         </div>
 
-        {/* STATS ROW */}
         <div className="flex gap-4">
           <div className="bg-slate-800/50 flex-1 p-3 rounded-xl border border-slate-700 backdrop-blur-sm">
             <span className="text-2xl font-black text-white block">
@@ -220,18 +217,18 @@ export default function ElectricityStaffDashboard() {
           tasks.map(task => (
             <div
               key={task.id}
-              className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 relative overflow-hidden group"
+              className="bg-white rounded-2xl p-5 shadow-sm border border-slate-100 relative overflow-hidden group space-y-5"
             >
               {/* PRIORITY BADGE */}
-              <div className={`absolute top-0 right-0 px-3 py-1 rounded-bl-xl text-[10px] font-black uppercase tracking-wider
+              <div className={`absolute top-0 right-0 px-3 py-1.5 rounded-bl-xl text-[10px] font-black uppercase tracking-wider
                 ${task.priority === 'CRITICAL' ? 'bg-rose-500 text-white' : 'bg-slate-100 text-slate-600'}
               `}>
                 {task.priority || "NORMAL"} Priority
               </div>
 
-              <div className="flex gap-4 mb-4">
-                {/* IMAGE */}
-                <div className="w-20 h-20 rounded-xl bg-slate-100 overflow-hidden shrink-0 flex items-center justify-center">
+              {/* TASK HEADER - Added mt-2 to spacing from badge */}
+              <div className="flex gap-5 items-start mt-2">
+                <div className="w-24 h-24 rounded-2xl bg-slate-100 overflow-hidden shrink-0 shadow-inner flex items-center justify-center">
                   {task.imageUrl || task.image ? (
                     <img
                       src={task.imageUrl || task.image}
@@ -239,40 +236,37 @@ export default function ElectricityStaffDashboard() {
                       alt="Fault"
                     />
                   ) : (
-                    <Camera className="w-6 h-6 text-slate-300" />
+                    <Camera className="w-8 h-8 text-slate-300" />
                   )}
                 </div>
 
-                {/* TEXT CONTENT */}
-                <div className="flex-1">
-                  <h3 className="font-bold text-slate-900 leading-tight mb-1">{task.title}</h3>
-                  
-                  <div className="flex items-start gap-1 text-slate-500 text-xs mb-2">
-                    <MapPin className="w-3 h-3 mt-0.5 shrink-0" />
-                    <span className="line-clamp-2">{task.location?.address || "Location detail unavailable"}</span>
-                  </div>
-
-                  {task.deadline && (
-                    <div className="flex items-center gap-1 text-amber-600 text-xs font-bold bg-amber-50 w-fit px-2 py-1 rounded-md">
-                      <Clock className="w-3 h-3" />
-                      <span>SLA: {new Date(task.deadline).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
-                    </div>
-                  )}
+                {/* Increased pt-3 for top gap to badge */}
+                <div className="flex-1 space-y-2 pt-3">
+                  <h3 className="font-bold text-slate-900 text-lg leading-tight">{task.title}</h3>
+                  {/* Address Icon and Text Removed */}
                 </div>
               </div>
 
+              {/* Deadline */}
+              {task.deadline && (
+                <div className="flex items-center gap-2 text-amber-600 text-xs font-black bg-amber-50 w-fit px-3 py-1.5 rounded-lg border border-amber-100">
+                  <Clock className="w-3.5 h-3.5" />
+                  <span>SLA: {new Date(task.deadline).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
+                </div>
+              )}
+
               {/* ACTIONS */}
-              {activeTab === "active" && (
-                <div className="grid grid-cols-2 gap-3">
+              {activeTab === "active" ? (
+                <div className="grid grid-cols-2 gap-4 pt-2">
                   <button
                     onClick={() => openMaps(task.location)}
-                    className="flex items-center justify-center gap-2 py-3 bg-slate-50 text-slate-700 rounded-xl text-xs font-bold hover:bg-slate-100 transition-colors"
+                    className="flex items-center justify-center gap-2 py-3.5 bg-slate-50 text-slate-700 rounded-xl text-xs font-black uppercase tracking-wide hover:bg-slate-100 transition-colors border border-slate-200"
                   >
                     <Navigation className="w-4 h-4" /> Navigate
                   </button>
 
-                  <label className={`flex items-center justify-center gap-2 py-3 rounded-xl text-xs font-bold transition-all cursor-pointer relative overflow-hidden
-                    ${uploadingId === task.id ? 'bg-slate-100 text-slate-400' : 'bg-slate-900 text-white hover:bg-emerald-600'}
+                  <label className={`flex items-center justify-center gap-2 py-3.5 rounded-xl text-xs font-black uppercase tracking-wide transition-all cursor-pointer relative overflow-hidden
+                    ${uploadingId === task.id ? 'bg-slate-100 text-slate-400 border border-slate-200' : 'bg-slate-900 text-white hover:bg-emerald-600 shadow-md shadow-slate-200'}
                   `}>
                     {uploadingId === task.id ? (
                       <span className="animate-pulse">Uploading...</span>
@@ -290,11 +284,9 @@ export default function ElectricityStaffDashboard() {
                     />
                   </label>
                 </div>
-              )}
-
-              {/* HISTORY STATUS */}
-              {(activeTab === "history" || task.status === 'COMPLETED') && (
-                <div className="w-full py-2 bg-emerald-50 text-emerald-600 rounded-xl flex items-center justify-center gap-2 text-xs font-bold mt-2">
+              ) : (
+                /* HISTORY STATUS */
+                <div className="w-full py-3 bg-emerald-50 text-emerald-600 rounded-xl flex items-center justify-center gap-2 text-xs font-black uppercase tracking-wide border border-emerald-100">
                   <CheckCircle className="w-4 h-4" /> 
                   Resolved {task.completedAt ? `on ${new Date(task.completedAt).toLocaleDateString()}` : ""}
                 </div>
