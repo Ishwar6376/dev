@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
 import { 
-  MapPin, 
   Clock, 
   Camera, 
   CheckCircle, 
@@ -10,39 +9,30 @@ import {
 import { useAuth0 } from "@auth0/auth0-react";
 import { getDatabase, ref, set, onDisconnect, remove } from "firebase/database";
 import ngeohash from "ngeohash";
-import { api } from "@/lib/api"; // Ensure this points to your configured Axios instance
+import { api } from "@/lib/api";
 
-// Initialize Realtime Database (for Geolocation tracking)
 const db = getDatabase();
 
-export default function WasteStaffDashboard() {
+export default function InfrastructureStaffDashboard() {
   const { logout, user, getAccessTokenSilently } = useAuth0();
   
-  // State for Tasks
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(true);
-  
-  const [activeTab, setActiveTab] = useState("active"); // 'active' or 'history'
+  const [activeTab, setActiveTab] = useState("active"); 
   const [uploadingId, setUploadingId] = useState(null);
 
-  // ------------------------------------------------------------------
-  // 1. FETCH TASKS (Active or History based on Tab)
-  // ------------------------------------------------------------------
   useEffect(() => {
     const fetchTasks = async () => {
       try {
         setLoading(true);
         const token = await getAccessTokenSilently();
-        
-        // Decide which endpoint to hit based on the tab
         const endpoint = activeTab === "active" 
-          ? "/api/staff/tasks/active"   // Maps to getTask controller
-          : "/api/staff/tasks/history"; // Maps to getAllPastTask controller
+          ? "/api/staff/tasks/active"   
+          : "/api/staff/tasks/history"; 
 
         const res = await api.get(endpoint, {
           headers: { Authorization: `Bearer ${token}` }
         });
-        console.log(res)
         setTasks(res.data);
       } catch (error) {
         console.error("Error fetching tasks:", error);
@@ -51,22 +41,17 @@ export default function WasteStaffDashboard() {
       }
     };
 
-    if (user) {
-      fetchTasks();
-    }
+    if (user) fetchTasks();
   }, [user, activeTab, getAccessTokenSilently]);
 
-  
   useEffect(() => {
     if (!user) return;
-
     let watchId = null;
     let currentRef = null;
 
     const updateLocation = (position) => {
       const { latitude, longitude } = position.coords;
       const geohash = ngeohash.encode(latitude, longitude, 5);
-      
       const sanitizedUserId = user.sub.replace('|', '_');
       const path = `staff/infra/${geohash}/${sanitizedUserId}`;
       const userRef = ref(db, path);
@@ -84,17 +69,13 @@ export default function WasteStaffDashboard() {
         remove(currentRef);
       }
       currentRef = userRef;
-
       set(userRef, staffData);
       onDisconnect(userRef).remove();
     };
 
-    const handleError = (err) => console.error("GPS Error:", err);
-
     if (navigator.geolocation) {
-      watchId = navigator.geolocation.watchPosition(
-        updateLocation, 
-        handleError, 
+      watchId = navigator.geolocation.watchPosition(updateLocation, 
+        (err) => console.error("GPS Error:", err), 
         { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
       );
     }
@@ -105,13 +86,9 @@ export default function WasteStaffDashboard() {
     };
   }, [user]);
 
-  // ------------------------------------------------------------------
-  // 3. ACTIONS
-  // ------------------------------------------------------------------
   const handleUploadProof = async (taskId, event) => {
     const file = event.target.files[0];
     if (!file) return;
-
     setUploadingId(taskId);
 
     try {
@@ -125,14 +102,11 @@ export default function WasteStaffDashboard() {
           "Content-Type": "multipart/form-data"
         }
       });
-
-     
       setTasks(prev => prev.filter(t => t.id !== taskId));
       alert("Task completed successfully!");
-
     } catch (error) {
       console.error("Upload failed", error);
-      alert("Failed to upload proof. Please try again.");
+      alert("Failed to upload proof.");
     } finally {
       setUploadingId(null);
     }
@@ -140,35 +114,34 @@ export default function WasteStaffDashboard() {
 
   const openMaps = (coords) => {
     if (coords?.lat && coords?.lng) {
-      window.open(`http://maps.google.com/maps?q=${coords.lat},${coords.lng}`, '_blank');
+      window.open(`https://www.google.com/maps/dir/?api=1&destination=${coords.lat},${coords.lng}`, '_blank');
     } else {
-      alert("Location coordinates missing for this task.");
+      alert("Location coordinates missing.");
     }
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 pb-20 font-sans max-w-md mx-auto shadow-2xl overflow-hidden relative">
+    <div className="min-h-screen bg-slate-50 pb-20 font-sans max-w-md mx-auto shadow-2xl overflow-hidden relative border-x border-slate-200">
       
       {/* HEADER */}
       <div className="bg-slate-900 text-white p-6 rounded-b-[2rem] shadow-lg sticky top-0 z-10">
-        <div className="flex justify-between items-start mb-6">
+        <div className="flex justify-between items-start mb-6 pt-safe">
           <div>
-            <p className="text-slate-400 text-xs font-bold uppercase tracking-wider mb-1">Welcome back</p>
+            <p className="text-slate-400 text-xs font-bold uppercase tracking-wider mb-1">Infrastructure Division</p>
             <h1 className="text-2xl font-black">{user?.name || "Field Officer"}</h1>
             <div className="flex items-center gap-2 mt-2">
-              <span className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse"/>
+              <span className="w-2.5 h-2.5 bg-emerald-400 rounded-full animate-pulse"/>
               <span className="text-xs font-bold text-emerald-400">ON DUTY & TRACKING</span>
             </div>
           </div>
           <button 
              onClick={() => logout()}
-             className="bg-slate-800 p-2 rounded-full hover:bg-slate-700 transition-colors"
+             className="bg-white/10 p-2.5 rounded-full hover:bg-white/20 transition-colors"
           >
-            <LogOut className="w-5 h-5 text-slate-400" />
+            <LogOut className="w-5 h-5 text-white" />
           </button>
         </div>
 
-        {/* Stats Row (Calculated from current view, ideally should come from API stats) */}
         <div className="flex gap-4">
           <div className="bg-slate-800/50 flex-1 p-3 rounded-xl border border-slate-700 backdrop-blur-sm">
             <span className="text-2xl font-black text-white block">
@@ -218,64 +191,57 @@ export default function WasteStaffDashboard() {
           </div>
         ) : (
           tasks.map((task) => (
-            <div key={task.id} className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 relative overflow-hidden group">
+            <div key={task.id} className="bg-white rounded-2xl p-5 shadow-sm border border-slate-100 relative overflow-hidden group space-y-5">
               
               {/* Priority Badge */}
-              <div className={`absolute top-0 right-0 px-3 py-1 rounded-bl-xl text-[10px] font-black uppercase tracking-wider
+              <div className={`absolute top-0 right-0 px-3 py-1.5 rounded-bl-xl text-[10px] font-black uppercase tracking-wider
                 ${task.priority === 'CRITICAL' ? 'bg-rose-500 text-white' : 'bg-slate-100 text-slate-600'}
               `}>
                 {task.priority || "NORMAL"} Priority
               </div>
 
-              {/* Task Content */}
-              <div className="flex gap-4 mb-4">
-                {/* Fallback image if none provided */}
-                <div className="w-20 h-20 rounded-xl bg-slate-100 overflow-hidden shrink-0">
+              {/* Task Header Information */}
+              <div className="flex gap-5 items-start mt-2">
+                <div className="w-24 h-24 rounded-2xl bg-slate-100 overflow-hidden shrink-0 shadow-inner flex items-center justify-center">
                   {task.imageUrl ? (
                     <img src={task.imageUrl} className="w-full h-full object-cover" alt="Issue" />
                   ) : (
-                    <div className="w-full h-full flex items-center justify-center text-slate-300">
-                      <Camera className="w-6 h-6" />
-                    </div>
+                    <Camera className="w-8 h-8 text-slate-300" />
                   )}
                 </div>
                 
-                <div>
-                  <h3 className="font-bold text-slate-900 leading-tight mb-1">{task.title}</h3>
-                  <div className="flex items-start gap-1 text-slate-500 text-xs mb-2">
-                    <MapPin className="w-3 h-3 mt-0.5 shrink-0" />
-                    <span className="line-clamp-2">{task.location?.address || "No Address Provided"}</span>
-                  </div>
-                  
-                  {task.deadline && (
-                    <div className="flex items-center gap-1 text-orange-600 text-xs font-bold bg-orange-50 w-fit px-2 py-1 rounded-md">
-                      <Clock className="w-3 h-3" />
-                      <span>Due: {new Date(task.deadline).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
-                    </div>
-                  )}
+                <div className="flex-1 space-y-2 pt-3">
+                  <h3 className="font-bold text-slate-900 text-lg leading-tight">{task.title}</h3>
+                  {/* Address Removed */}
                 </div>
               </div>
 
-              {/* Action Buttons (Only for Active Tasks) */}
-              {activeTab === 'active' && (
-                <div className="grid grid-cols-2 gap-3">
+              {/* Deadline Row */}
+              {task.deadline && (
+                <div className="flex items-center gap-2 text-orange-600 text-xs font-black bg-orange-50 w-fit px-3 py-1.5 rounded-lg border border-orange-100">
+                  <Clock className="w-3.5 h-3.5" />
+                  <span>Due by {new Date(task.deadline).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
+                </div>
+              )}
+
+              {/* Action Buttons */}
+              {activeTab === 'active' ? (
+                <div className="grid grid-cols-2 gap-4 pt-2">
                   <button 
                     onClick={() => openMaps(task.location)}
-                    className="flex items-center justify-center gap-2 py-3 bg-slate-50 text-slate-700 rounded-xl text-xs font-bold hover:bg-slate-100 transition-colors"
+                    className="flex items-center justify-center gap-2 py-3.5 bg-slate-50 text-slate-700 rounded-xl text-xs font-black uppercase tracking-wide hover:bg-slate-100 transition-colors border border-slate-200"
                   >
-                    <Navigation className="w-4 h-4" />
-                    Navigate
+                    <Navigation className="w-4 h-4" /> Navigate
                   </button>
 
-                  <label className={`flex items-center justify-center gap-2 py-3 rounded-xl text-xs font-bold transition-all cursor-pointer relative overflow-hidden
-                    ${uploadingId === task.id ? 'bg-slate-100 text-slate-400' : 'bg-slate-900 text-white hover:bg-emerald-600'}
+                  <label className={`flex items-center justify-center gap-2 py-3.5 rounded-xl text-xs font-black uppercase tracking-wide transition-all cursor-pointer relative overflow-hidden
+                    ${uploadingId === task.id ? 'bg-slate-100 text-slate-400 border border-slate-200' : 'bg-slate-900 text-white hover:bg-emerald-600 shadow-md shadow-slate-200'}
                   `}>
                     {uploadingId === task.id ? (
                       <span className="animate-pulse">Uploading...</span>
                     ) : (
                       <>
-                        <Camera className="w-4 h-4" />
-                        Resolve
+                        <Camera className="w-4 h-4" /> Resolve
                       </>
                     )}
                     <input 
@@ -287,20 +253,16 @@ export default function WasteStaffDashboard() {
                     />
                   </label>
                 </div>
-              )}
-
-              {/* Completed Status (Only for History Tasks) */}
-              {(activeTab === 'history' || task.status === 'COMPLETED') && (
-                <div className="w-full py-2 bg-emerald-50 text-emerald-600 rounded-xl flex items-center justify-center gap-2 text-xs font-bold">
-                  <CheckCircle className="w-4 h-4" />
-                  Completed on {task.completedAt ? new Date(task.completedAt).toLocaleDateString() : ""}
+              ) : (
+                /* Completed Status */
+                <div className="w-full py-3 bg-emerald-50 text-emerald-600 rounded-xl flex items-center justify-center gap-2 text-xs font-black uppercase tracking-wide border border-emerald-100">
+                  <CheckCircle className="w-4 h-4" /> Completed {task.completedAt ? new Date(task.completedAt).toLocaleDateString() : ""}
                 </div>
               )}
             </div>
           ))
         )}
       </div>
-
     </div>
   );
 }

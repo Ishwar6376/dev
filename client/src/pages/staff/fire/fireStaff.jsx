@@ -1,6 +1,5 @@
-import React, { useState, useEffect, useCallback, useRef } from "react";
+import React, { useState, useEffect, useCallback, useRef, memo } from "react";
 import { 
-  MapPin, 
   Clock, 
   Camera, 
   CheckCircle, 
@@ -17,7 +16,7 @@ import { getDatabase, ref, set, onDisconnect, remove, onValue, update } from "fi
 import ngeohash from "ngeohash";
 import { GoogleMap, useJsApiLoader, DirectionsRenderer, Marker, Polyline, OverlayView } from "@react-google-maps/api";
 import { db } from "../../../firebase/firebase"; 
-import { api } from "../../../lib/api"; // Import API utility
+import { api } from "../../../lib/api"; 
 
 const libraries = ["places", "geometry"];
 
@@ -31,7 +30,7 @@ const defaultCenter = { lat: 25.4358, lng: 81.8463 };
 const FIRE_TRUCK_ICON = "/icons/fire-truck.png"; 
 const ROUTE_COLOR = "#ea580c";
 
-export default function FireStaffDashboard() {
+const FireStaffDashboard = memo(() => {
   const { logout, user } = useAuth0();
   const { isLoaded } = useJsApiLoader({
     id: 'google-map-script',
@@ -74,7 +73,6 @@ export default function FireStaffDashboard() {
     setTasks([]); 
 
     if (activeTab === "active") {
-
       const alertsRef = ref(db, 'fireAlerts/');
       const unsubscribe = onValue(alertsRef, (snapshot) => {
         const data = snapshot.val();
@@ -104,13 +102,10 @@ export default function FireStaffDashboard() {
           });
         }
 
-        // Filter out resolved tasks for the 'Active' tab
         const activeTasks = myTasks.filter(t => t.status !== "RESOLVED");
         activeTasks.sort((a, b) => b.timestamp - a.timestamp);
         
         setTasks(activeTasks);
-        
-        // Update Status based on Active Missions
         const hasActiveMission = activeTasks.length > 0;
         setStaffStatus(hasActiveMission ? "ENGAGED" : "AVAILABLE");
         setLoading(false);
@@ -119,14 +114,10 @@ export default function FireStaffDashboard() {
       return () => unsubscribe();
 
     } else {
-      // 2. HISTORY DATA (API / Firestore)
       const fetchHistory = async () => {
         try {
-          // Reusing the same API endpoint used in Admin Dashboard
           const res = await api.get('/api/reports/FetchAdminFireHistory');
-          
           if (res.data && Array.isArray(res.data)) {
-            // FILTER: Only show reports assigned to THIS staff member
             const myHistory = res.data.filter(report => report.assignedTo === user.sub);
 
             const formattedHistory = myHistory.map(r => ({
@@ -143,7 +134,6 @@ export default function FireStaffDashboard() {
               completedAt: r.archivedAt
             }));
 
-            // Sort by completion time or timestamp (newest first)
             formattedHistory.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
             setTasks(formattedHistory);
           }
@@ -153,19 +143,15 @@ export default function FireStaffDashboard() {
           setLoading(false);
         }
       };
-
       fetchHistory();
     }
   }, [user, activeTab]);
 
   useEffect(() => {
     if (!navMode || !activeTask) return;
-
     const taskRef = ref(db, `fireAlerts/${activeTask.geohash}/${activeTask.id}`);
-    
     const unsubscribe = onValue(taskRef, (snapshot) => {
       if (!snapshot.exists()) {
-        console.log("Mission closed. Starting redirect sequence.");
         setIsRedirecting(true);
         setWaitingForUser(false); 
         setTimeout(() => {
@@ -180,7 +166,6 @@ export default function FireStaffDashboard() {
         }, 3000); 
       }
     });
-
     return () => unsubscribe();
   }, [navMode, activeTask]);
 
@@ -338,8 +323,6 @@ export default function FireStaffDashboard() {
   if (navMode && isLoaded) {
     return (
       <div className="fixed inset-0 z-[5000] bg-white h-[100dvh] w-full flex flex-col relative">
-        
-        {/* --- REDIRECTING OVERLAY --- */}
         {isRedirecting && (
           <div className="absolute inset-0 z-[6000] bg-black/80 flex flex-col items-center justify-center animate-in fade-in duration-300 backdrop-blur-sm">
              <div className="bg-white p-8 rounded-3xl flex flex-col items-center gap-5 text-center max-w-[85%] shadow-2xl">
@@ -358,7 +341,6 @@ export default function FireStaffDashboard() {
           </div>
         )}
 
-        {/* Top Header Overlay */}
         <div className="absolute top-0 left-0 right-0 z-10 p-4 pt-safe bg-gradient-to-b from-black/60 to-transparent pointer-events-none">
           <div className="flex items-center gap-3 pointer-events-auto mt-2">
             <button onClick={exitNavigation} className="bg-white p-2.5 rounded-full shadow-lg active:scale-95 transition-transform">
@@ -371,7 +353,6 @@ export default function FireStaffDashboard() {
           </div>
         </div>
 
-        {/* Map Container */}
         <div className="flex-1 w-full h-full relative">
           <GoogleMap
             center={currentLocation}
@@ -432,10 +413,10 @@ export default function FireStaffDashboard() {
                       src={activeTask.image} 
                       className="w-full h-full object-cover" 
                       alt="Victim"
-                      onError={(e) => { e.target.style.display = 'none'; }} 
+                      onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex'; }} 
                     />
-                    <div className="absolute inset-0 flex items-center justify-center -z-10">
-                      <MapPin className="w-6 h-6 text-slate-400" />
+                    <div className="absolute inset-0 items-center justify-center -z-10 hidden">
+                      <ShieldCheck className="w-6 h-6 text-slate-400" />
                     </div>
                   </div>
                   <div className="w-0 h-0 border-l-[8px] border-l-transparent border-r-[8px] border-r-transparent border-t-[10px] border-t-white shadow-sm mt-[-2px] z-10"></div>
@@ -445,7 +426,6 @@ export default function FireStaffDashboard() {
           </GoogleMap>
         </div>
 
-        {/* Bottom Action Card */}
         <div className="absolute bottom-6 left-4 right-4 z-10 pb-safe">
           <div className="bg-white rounded-2xl shadow-2xl p-5 border border-slate-100">
             <div className="flex justify-between items-end mb-4">
@@ -487,7 +467,6 @@ export default function FireStaffDashboard() {
                 </span>
               )}
               
-              {/* Progress Bar */}
               {!waitingForUser && isArrivalDisabled && (
                  <div className="absolute bottom-0 left-0 h-1 bg-slate-300 transition-all duration-500" style={{ width: `${Math.min(100, Math.max(0, 100 - ((distanceToTarget - 20) / 5)))}%` }}></div>
               )}
@@ -498,11 +477,8 @@ export default function FireStaffDashboard() {
     );
   }
 
-  // --- DASHBOARD LIST VIEW ---
   return (
     <div className="min-h-screen bg-slate-50 pb-20 font-sans max-w-md mx-auto shadow-2xl overflow-hidden relative border-x border-slate-200">
-       
-       {/* SUCCESS MODAL / POPUP */}
        {showSuccessModal && (
          <div className="absolute top-6 left-6 right-6 z-50 animate-in slide-in-from-top-4 fade-in duration-500">
            <div className="bg-emerald-600 text-white p-4 rounded-xl shadow-2xl shadow-emerald-500/40 flex items-center gap-4">
@@ -561,35 +537,35 @@ export default function FireStaffDashboard() {
           </div>
         ) : (
           tasks.map(task => (
-            <div key={task.id} className="bg-white rounded-[1.5rem] p-5 shadow-sm border border-slate-100 hover:shadow-md transition-shadow">
-              <div className="flex gap-4 mb-5">
-                <div className="w-20 h-20 rounded-2xl bg-slate-100 overflow-hidden relative shrink-0">
+            <div key={task.id} className="bg-white rounded-[1.5rem] p-5 shadow-sm border border-slate-100 hover:shadow-md transition-shadow space-y-5">
+              
+              {/* Added mt-2 and pt-3 to Header Info */}
+              <div className="flex gap-5 items-start mt-2">
+                <div className="w-24 h-24 rounded-2xl bg-slate-100 overflow-hidden relative shrink-0 shadow-inner">
                   {task.image ? (
                     <img src={task.image} className="w-full h-full object-cover" alt="Scene" />
                   ) : (
                     <div className="flex items-center justify-center h-full w-full">
-                      <Camera className="w-6 h-6 text-slate-300"/>
+                      <Camera className="w-8 h-8 text-slate-300"/>
                     </div>
                   )}
                 </div>
-                <div>
-                  <h3 className="font-bold text-slate-900 text-lg leading-tight mb-1">{task.title}</h3>
-                  <div className="flex items-start gap-1.5 text-slate-500 text-xs mb-2">
-                    <MapPin className="w-3.5 h-3.5 shrink-0 mt-0.5 text-slate-400" /> 
-                    <span className="line-clamp-2 leading-relaxed">{task.location?.address}</span>
-                  </div>
-                  <div className="inline-flex items-center gap-1.5 px-2 py-1 rounded-md bg-orange-50 text-orange-700 text-[10px] font-bold uppercase tracking-wide">
-                    <Clock className="w-3 h-3" />
+                <div className="flex-1 space-y-2 pt-3">
+                  <h3 className="font-bold text-slate-900 text-lg leading-tight">{task.title}</h3>
+                  {/* Removed MapPin and Address */}
+                  
+                  <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-orange-50 text-orange-700 text-[11px] font-black uppercase tracking-wide border border-orange-100">
+                    <Clock className="w-3.5 h-3.5" />
                     {new Date(task.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
                   </div>
                 </div>
               </div>
 
               {activeTab === 'active' && (
-                <div className="w-full">
+                <div className="w-full pt-2">
                   <button 
                     onClick={() => handleStartNavigation(task)} 
-                    className="w-full py-3.5 bg-slate-800 text-white hover:bg-slate-900 rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-colors shadow-lg shadow-slate-200"
+                    className="w-full py-3.5 bg-slate-800 text-white hover:bg-slate-900 rounded-xl text-xs font-black uppercase tracking-wide flex items-center justify-center gap-2 transition-colors shadow-lg shadow-slate-200"
                   >
                     <Navigation className="w-4 h-4" /> Start Navigation
                   </button>
@@ -597,7 +573,7 @@ export default function FireStaffDashboard() {
               )}
 
               {activeTab === 'history' && (
-                <div className="mt-2 bg-emerald-50 text-emerald-600 rounded-xl flex items-center justify-center gap-2 text-xs font-bold py-3">
+                <div className="mt-2 bg-emerald-50 text-emerald-600 rounded-xl flex items-center justify-center gap-2 text-xs font-black uppercase tracking-wide py-3 border border-emerald-100">
                   <CheckCircle className="w-4 h-4" /> Mission Accomplished
                 </div>
               )}
@@ -607,4 +583,6 @@ export default function FireStaffDashboard() {
       </div>
     </div>
   );
-}
+});
+
+export default FireStaffDashboard;

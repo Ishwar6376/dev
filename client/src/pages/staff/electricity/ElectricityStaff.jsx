@@ -251,7 +251,7 @@ export default function ElectricityStaffDashboard() {
               {task.deadline && (
                 <div className="flex items-center gap-2 text-amber-600 text-xs font-black bg-amber-50 w-fit px-3 py-1.5 rounded-lg border border-amber-100">
                   <Clock className="w-3.5 h-3.5" />
-                  <span>SLA: {new Date(task.deadline).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
+                  <span>Due by {new Date(task.deadline).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
                 </div>
               )}
 
