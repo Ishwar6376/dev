@@ -8,4 +8,5 @@ router.post('/waterCheck',waterCheck)
 router.post('/wasteCheck',wasteCheck)
 router.post('/infraCheck',infraCheck)
 router.post('/electricityCheck',electricityCheck)
+
 export default router

@@ -22,6 +22,8 @@ import localityRoutes from "./src/routes/locality.routes.js"
 import reportRoutes from "./src/routes/report.routes.js"
 import userRoutes from "./src/routes/user.routes.js"
 const app = express();
+app.use(express.json());
+app.use(express.urlencoded({ extended: true })); // 🔥 FIXES req.body undefined
 
 console.log("CORS ORIGIN:", process.env.CORS_ORIGIN);
 
