@@ -345,7 +345,7 @@ export default function App() {
         <div className="flex items-center gap-4 select-none">
           <img src={logo} alt="CityBeat Logo" className="h-12 w-auto object-contain"/>
           <h1 className="text-2xl font-black tracking-tighter text-white">
-            City<span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-blue-500">Beat</span>
+            Urban<span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-blue-500">Flow</span>
           </h1>
         </div>
 

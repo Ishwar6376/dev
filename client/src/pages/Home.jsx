@@ -22,7 +22,7 @@ export default function Home() {
         <img src={logo} alt="CityBeat Logo" className="w-12 h-12 object-contain" />
         
         <h1 className="text-2xl font-black tracking-tighter bg-gradient-to-r from-white via-blue-100 to-purple-200 bg-clip-text text-transparent">
-          CityBeat
+          UrbanFlow
         </h1>
       </header>
 
