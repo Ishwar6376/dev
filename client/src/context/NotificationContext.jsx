@@ -20,6 +20,9 @@ export const NotificationProvider = ({ children }) => {
       );
       
     
+
+
+      
       await axios.patch(`${API_URL}/api/notifications/${notificationId}/read`);
       
       setUnreadCount(prev => Math.max(0, prev - 1));
