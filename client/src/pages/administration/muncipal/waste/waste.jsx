@@ -151,15 +151,31 @@ export default function WasteAdmin() {
               <h2 className="text-3xl font-black text-slate-900 tracking-tight">
                 Active Zones
               </h2>
-              <p className="text-slate-500">
-                Localities grouped by 5km² Geohash clusters
-                                  <button
-  onClick={() => navigate("/admin-map/WASTE")}
-  className="bg-red-600 text-white px-4 py-2 rounded"
->
-  View Waste Complaints Map
-</button>
-              </p>
+           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-6 bg-white border border-slate-200 rounded-xl shadow-sm hover:border-emerald-200 transition-colors">
+  <div>
+    <div className="flex items-center gap-2 mb-1">
+      <div className="p-1.5 bg-emerald-100 rounded-md">
+        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+        </svg>
+      </div>
+      <h3 className="text-slate-900 font-semibold text-lg">Waste & Sanitation</h3>
+    </div>
+    <p className="text-slate-500 text-sm italic">
+      Localities grouped by <span className="text-emerald-700 font-medium">5km² Geohash clusters</span>
+    </p>
+  </div>
+  
+  <button
+    onClick={() => navigate("/admin-map/WASTE")}
+    className="group flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-medium px-5 py-2.5 rounded-lg transition-all duration-200 shadow-sm hover:shadow-emerald-100 hover:shadow-lg active:scale-95"
+  >
+    <span className="text-sm">View Waste Map</span>
+    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 group-hover:rotate-12 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+    </svg>
+  </button>
+</div>
             </div>
 
             {loading ? (

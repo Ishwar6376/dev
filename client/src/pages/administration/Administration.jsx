@@ -228,7 +228,7 @@ export default function CityAdminHub() {
     onClick={() => navigate("/administration/complaints-map")}
     className="relative bg-emerald-600 hover:bg-emerald-700 text-white px-8 py-4 rounded-2xl font-bold shadow-xl transition-all"
   >
-    🗺️ View Public Complaints Map
+     View Public Complaints Map
 
     {/* 🔴 LIVE COUNT BADGE */}
     <span className="absolute -top-2 -right-2 bg-red-600 text-white text-xs font-bold w-7 h-7 flex items-center justify-center rounded-full shadow-lg">
