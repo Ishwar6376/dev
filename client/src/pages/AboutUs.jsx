@@ -5,25 +5,25 @@ import { Card, CardHeader, CardTitle, CardContent } from '../ui/card';
 const teamMembers = [
   { 
     name: "Ishwar", 
-    email: "ishwar@example.com", 
+    email: "ishwarkumawat@gmail.com", 
     image: "/src/ui/ishwar.jpg",
     linkedin: "https://www.linkedin.com/in/ishwarkumawat/"
   },
   { 
     name: "Arushi Nayak", 
-    email: "arushi@example.com", 
+    email: "nayakarushi2005@gmail.com", 
     image: "/src/ui/arushi.jpg",
     linkedin: "https://www.linkedin.com/in/arushi-nayak-29299a344/"
   },
   { 
     name: "Aryan Gupta", 
-    email: "aryan@example.com", 
+    email: "aryan072806@gmail.com", 
     image: "/src/ui/aryan.jpg",
     linkedin: "https://www.linkedin.com/in/aryan-gupta-278376313/"
   },
   { 
     name: "Shreyansh Sachan", 
-    email: "shreyansh@example.com", 
+    email: "shreyansh.sachan@hotmail.com", 
     image: "/src/ui/shreyansh.jpg",
     linkedin: "https://www.linkedin.com/in/shreyansh-sachan/"
   },
