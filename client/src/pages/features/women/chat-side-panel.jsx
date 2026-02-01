@@ -6,8 +6,9 @@ import { ScrollArea } from "../../../ui/scroll-area"
 import { Avatar, AvatarFallback, AvatarImage } from "../../../ui/avatar"
 import { db } from "../../../firebase/firebase"
 import { ref, push, set } from "firebase/database";
-
+// --- CHANGE START: Import API ---
 import { api } from "../../../lib/api";
+// --- CHANGE END ---
 
 export default function ChatSidePanel({ 
   messages, 
@@ -23,18 +24,23 @@ export default function ChatSidePanel({
 }) {
   const [newMessage, setNewMessage] = useState("")
   
+  // --- STATES: CALLING FEATURE ---
   const [showCallConfirm, setShowCallConfirm] = useState(false)
   const [isSimulatingCall, setIsSimulatingCall] = useState(false)
   const [callTimer, setCallTimer] = useState(0)
 
+  // --- STATES: VOICE RECORDING ---
   const [isRecording, setIsRecording] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [recordingDuration, setRecordingDuration] = useState(0);
   
+  // Refs for logic that doesn't need to trigger re-renders instantly
   const mediaRecorderRef = useRef(null);
   const audioChunksRef = useRef([]);
   const recordingTimerRef = useRef(null);
   const scrollRef = useRef(null)
+
+  // Auto-scroll chat
   useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollIntoView({ behavior: "smooth" })

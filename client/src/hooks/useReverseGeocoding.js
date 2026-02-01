@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useJsApiLoader } from '@react-google-maps/api';
 
 export  function useReverseGeocoding(lat, lng) {
-  const [address, setAddress] = useState("");
+  const [userAddress, setAddress] = useState("");
   const [loading, setLoading] = useState(false);
   const { isLoaded } = useJsApiLoader({
     id: 'google-map-script',
@@ -25,5 +25,5 @@ export  function useReverseGeocoding(lat, lng) {
     }
   }, [isLoaded, lat, lng]);
 
-  return { address, loading, isLoaded };
+  return { userAddress, loading, isLoaded };
 }

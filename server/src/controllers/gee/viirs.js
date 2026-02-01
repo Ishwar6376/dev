@@ -1,9 +1,9 @@
 import path from "path";
 import { fileURLToPath } from "url";
 import fs from "fs";
-import { runFireProtectionCheck } from "../gee/earth/fire/viirs_fire_monitor.js"; // Ensure this matches your wrapper filename
+import { runFireProtectionCheck } from "../../gee/earth/fire/viirs_fire_monitor.js"; // Ensure this matches your wrapper filename
 import dotenv from "dotenv";
-import { db } from "../firebaseadmin/firebaseadmin.js";
+import { db } from "../../firebaseadmin/firebaseadmin.js";
 
 dotenv.config();
 const __filename = fileURLToPath(import.meta.url);

@@ -4,11 +4,13 @@ client/node_modules/
 server/node_modules/
 agents/venv
 server/venv
+client/src/firebase/firebase.js
 agents/__pycache__
 agents/brain/__pycache__
 agents/brain/__init__.py
 server/config/gee-service-account.json
 server/vertexAiKey.json
+server/serviceAccountKey.json
 # Env
 .env
 .env.*
@@ -30,7 +32,6 @@ serviceAccountKey.json
 client/src/config.js
 vertexAiKey.json
 unknown*
-client/src/firebase/firebase.js
 venv/
 sentinal/model
 sentinal/serviceAccountKey.json

@@ -1,0 +1,26 @@
+{
+  "folders": [
+    {
+      "name": "agents",
+      "path": "agents"
+    },
+    {
+      "name": "client",
+      "path": "client"
+    },
+    {
+      "name": "server",
+      "path": "server"
+    },
+    {
+      "name": "sentinal",
+      "path": "sentinal"
+    },
+    {
+      "path": "."
+    },
+  ],
+  "settings": {
+    "python.terminal.activateEnvironment": true
+  }
+}
