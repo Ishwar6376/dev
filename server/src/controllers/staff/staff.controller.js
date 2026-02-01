@@ -82,23 +82,23 @@ export const assignTask = async (req, res) => {
     const newTask = {
       title,
       description: description || "",
-      priority: priority || "MEDIUM", 
+      priority: priority || "MEDIUM",
       status: "PENDING",
       assignedTo,
       assignedToName: assignedToName || "Staff Member",
       assignedBy,
-      zoneGeohash, 
+      zoneGeohash,
       department: department || 'waste',
       location: location || {},
-      reportId: reportId || null, 
+      reportId: reportId || null,
       reporterEmail: reporterEmail || null,
       createdAt: admin.firestore.FieldValue.serverTimestamp(),
-      imageUrl:imageUrl,
       deadline: deadline ? admin.firestore.Timestamp.fromDate(new Date(deadline)) : null,
-      severity,
-      address,
-      reporterUserId
-
+      
+      imageUrl: imageUrl || null,         
+      severity: severity || "LOW",       
+      address: address || null,           
+      reporterUserId: reporterUserId || null 
     };
 
     const taskRef = await db.collection('tasks').add(newTask);
