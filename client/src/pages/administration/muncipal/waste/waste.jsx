@@ -11,9 +11,9 @@ import {
   ExternalLink,
   CheckCircle2,
   Clock,
-  Activity,
   Truck,
-  Inbox
+  Inbox,
+  RefreshCw
 } from "lucide-react";
 import { useAuthStore } from "../../../../store/useAuthStore";
 import { api } from "../../../../lib/api.js";
@@ -25,30 +25,43 @@ export default function WasteAdmin() {
 
   const [zones, setZones] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false); // New state for background refresh
+  const [error, setError] = useState(null);
   const [selectedZone, setSelectedZone] = useState(null);
-  
   const [activeTab, setActiveTab] = useState("current"); 
 
-  useEffect(() => {
-    const fetchZones = async () => {
-      try {
-        const res = await api.get("/api/municipal/waste/reports");
-        if (res.data && res.data.zones) {
-          setZones(res.data.zones);
-        } else {
-          setZones([]);
-        }
-        setLoading(false);
-      } catch (error) {
-        console.error("Error fetching zones:", error);
+  const fetchZones = async (isManualRefresh = false) => {
+    // Only trigger full page loading on first load, not on manual refresh
+    if (isManualRefresh) {
+      setRefreshing(true);
+    } else {
+      setLoading(true);
+    }
+    
+    setError(null);
+    try {
+      const res = await api.get("/api/municipal/waste/reports");
+      if (res.data && res.data.zones) {
+        setZones(res.data.zones);
+      } else {
         setZones([]);
-        setLoading(false);
       }
-    };
-    fetchZones();
-  }, []);
+    } catch (error) {
+      console.error("Error fetching zones:", error);
+      setError("Failed to load waste data. Please try again.");
+      if (!isManualRefresh) setZones([]);
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  };
 
-  
+  useEffect(() => {
+    if (storedUser) {
+      fetchZones();
+    }
+  }, [storedUser]);
+
   const priorityMap = {
     "CRITICAL": 0,
     "HIGH": 1,
@@ -66,7 +79,7 @@ export default function WasteAdmin() {
     const resolved = reports.filter(r => r.status === "RESOLVED");
 
     const sortByPriority = (list) => {
-      return list.sort((a, b) => {
+      return [...list].sort((a, b) => {
         const pA = priorityMap[a.severity] ?? 99;
         const pB = priorityMap[b.severity] ?? 99;
         return pA - pB;
@@ -79,7 +92,6 @@ export default function WasteAdmin() {
       resolvedReports: sortByPriority(resolved)
     };
   }, [selectedZone]);
-
 
   const getStatusBadge = (status) => {
     switch (status) {
@@ -97,7 +109,6 @@ export default function WasteAdmin() {
 
   return (
     <div className="min-h-screen w-full bg-slate-50 text-slate-900 font-sans flex flex-col">
-      {/* HEADER */}
       <header className="sticky top-0 z-50 w-full h-20 px-8 flex items-center justify-between bg-white/80 backdrop-blur-md border-b border-slate-200 shadow-sm">
         <div className="flex items-center gap-4">
           <button
@@ -117,16 +128,20 @@ export default function WasteAdmin() {
             <Trash2 className="w-6 h-6" />
           </div>
           <div>
-            <h1 className="text-xl font-black tracking-tighter text-slate-900">
-              Smart Waste
-            </h1>
-            <p className="text-[10px] text-slate-500 font-bold tracking-widest uppercase">
-              Sanitation Management
-            </p>
+            <h1 className="text-xl font-black tracking-tighter text-slate-900">Smart Waste</h1>
+            <p className="text-[10px] text-slate-500 font-bold tracking-widest uppercase">Sanitation Management</p>
           </div>
         </div>
 
         <div className="flex items-center gap-3">
+          <button
+            onClick={() => fetchZones(true)} 
+            className="p-2 text-slate-400 hover:text-emerald-600 transition-colors"
+            title="Refresh Data"
+            disabled={loading || refreshing}
+          >
+            <RefreshCw className={`w-5 h-5 ${(loading || refreshing) ? 'animate-spin' : ''}`} />
+          </button>
           <button
             onClick={() => logout({ returnTo: window.location.origin })}
             className="h-11 w-11 flex items-center justify-center rounded-full bg-white border border-slate-200 shadow-sm text-slate-500 hover:text-red-600 hover:bg-red-50 hover:border-red-200 transition-all"
@@ -136,24 +151,53 @@ export default function WasteAdmin() {
         </div>
       </header>
 
-      {/* MAIN CONTENT */}
       <main className="flex-1 p-8 max-w-7xl mx-auto w-full">
-        {/* VIEW 1: ZONES GRID (Default) */}
         {!selectedZone ? (
           <>
             <div className="mb-8">
-              <h2 className="text-3xl font-black text-slate-900 tracking-tight">
-                Active Zones
-              </h2>
-              <p className="text-slate-500">
-                Localities grouped by 1.2km² Geohash clusters
-              </p>
+              <h2 className="text-3xl font-black text-slate-900 tracking-tight">Active Zones</h2>
+              <p className="text-slate-500 mb-6">Localities grouped by 1.2km² Geohash clusters</p>
+
+              {/* --- NEW MAP CARD COMPONENT (Added) --- */}
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-6 bg-white border border-slate-200 rounded-xl shadow-sm hover:border-emerald-200 transition-colors">
+                <div>
+                    <div className="flex items-center gap-2 mb-1">
+                    <div className="p-1.5 bg-emerald-100 rounded-md">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                        </svg>
+                    </div>
+                    <h3 className="text-slate-900 font-semibold text-lg">Sanitation Analysis</h3>
+                    </div>
+                    <p className="text-slate-500 text-sm italic">
+                    Live visualization of waste accumulation and collection routes
+                    </p>
+                </div>
+                
+                <button
+                    onClick={() => navigate("/admin-map/WASTE")}
+                    className="group flex items-center justify-center gap-2 bg-emerald-500 hover:bg-emerald-600 text-white font-medium px-5 py-2.5 rounded-lg transition-all duration-200 shadow-sm hover:shadow-emerald-100 hover:shadow-lg active:scale-95"
+                >
+                    <span className="text-sm">View Waste Map</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                    </svg>
+                </button>
+              </div>
+              {/* --------------------------------- */}
+
             </div>
 
             {loading ? (
-              <div className="flex items-center justify-center h-64 text-slate-400 gap-3">
-                <div className="w-6 h-6 border-2 border-slate-300 border-t-emerald-500 rounded-full animate-spin" />
-                Aggregating Locality Data...
+              <div className="flex flex-col items-center justify-center h-64 text-slate-400 gap-3">
+                <div className="w-8 h-8 border-4 border-slate-200 border-t-emerald-500 rounded-full animate-spin" />
+                <p className="font-bold animate-pulse">Aggregating Locality Data...</p>
+              </div>
+            ) : error ? (
+              <div className="flex flex-col items-center justify-center h-64 text-center">
+                <AlertOctagon className="w-12 h-12 text-rose-500 mb-4" />
+                <p className="text-slate-600 font-medium">{error}</p>
+                <button onClick={() => fetchZones(false)} className="mt-4 text-emerald-600 font-bold hover:underline">Try Again</button>
               </div>
             ) : zones.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-64 text-slate-400">
@@ -161,24 +205,19 @@ export default function WasteAdmin() {
                 <p>No active waste zones found.</p>
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 ${refreshing ? 'opacity-50 pointer-events-none' : ''}`}>
                 {zones.map((zone) => {
-                  // --- CALCULATE BARS ---
                   const reports = zone.reports || [];
                   const total = reports.length || 1; 
-
-                  // 1. Separate Resolved vs Pending
-                  const resolvedList = reports.filter(r => r.status === "RESOLVED");
+                  const resolvedCount = reports.filter(r => r.status === "RESOLVED").length;
                   const pendingList = reports.filter(r => r.status !== "RESOLVED");
 
-                  // 2. Counts for Progress Bar
-                  const resolvedCount = resolvedList.length;
-                  
-                  // Pending broken down by severity
-                  const criticalCount = pendingList.filter(r => r.severity === "CRITICAL").length;
-                  const highCount = pendingList.filter(r => r.severity === "HIGH").length;
-                  const mediumCount = pendingList.filter(r => r.severity === "MEDIUM").length;
-                  const lowCount = pendingList.filter(r => r.severity === "LOW").length;
+                  const counts = {
+                    critical: pendingList.filter(r => r.severity === "CRITICAL").length,
+                    high: pendingList.filter(r => r.severity === "HIGH").length,
+                    medium: pendingList.filter(r => r.severity === "MEDIUM").length,
+                    low: pendingList.filter(r => r.severity === "LOW").length,
+                  };
 
                   return (
                     <button
@@ -190,52 +229,34 @@ export default function WasteAdmin() {
                         <div className="w-14 h-14 bg-slate-50 rounded-2xl flex items-center justify-center text-slate-400 group-hover:bg-emerald-50 group-hover:text-emerald-600 transition-colors">
                           <MapPin className="w-7 h-7" />
                         </div>
-                        {criticalCount > 0 && (
+                        {counts.critical > 0 && (
                           <span className="px-3 py-1 bg-rose-50 text-rose-600 border border-rose-100 rounded-full text-[10px] font-black uppercase tracking-wider flex items-center gap-1">
-                            <AlertOctagon className="w-3 h-3" />{" "}
-                            {criticalCount} Critical
+                            <AlertOctagon className="w-3 h-3" /> {counts.critical} Critical
                           </span>
                         )}
                       </div>
 
-                      <h3 className="text-2xl font-black text-slate-900 mb-1">
-                        Zone {zone.zoneId.toUpperCase()}
-                      </h3>
-                      <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-6">
-                        Geohash: {zone.geohash}
-                      </p>
+                      <h3 className="text-2xl font-black text-slate-900 mb-1">Zone {zone.zoneId.toUpperCase()}</h3>
+                      <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-6">Geohash: {zone.geohash}</p>
 
-                      {/* --- MULTI-COLOR PROGRESS BAR --- */}
                       <div className="space-y-3">
                         <div className="flex justify-between text-xs font-bold text-slate-600">
                           <span>Total Reports</span>
                           <span>{reports.length}</span>
                         </div>
-                        
                         <div className="w-full h-3 bg-slate-100 rounded-full overflow-hidden flex">
-                          {/* 1. Critical (Red) */}
-                          <div style={{ width: `${(criticalCount / total) * 100}%` }} className="bg-rose-500 h-full" />
-                          {/* 2. High (Orange) */}
-                          <div style={{ width: `${(highCount / total) * 100}%` }} className="bg-orange-500 h-full" />
-                          {/* 3. Medium (Yellow) */}
-                          <div style={{ width: `${(mediumCount / total) * 100}%` }} className="bg-yellow-400 h-full" />
-                          {/* 4. Low (Blue) */}
-                          <div style={{ width: `${(lowCount / total) * 100}%` }} className="bg-blue-400 h-full" />
-                          {/* 5. Resolved (Green) */}
+                          <div style={{ width: `${(counts.critical / total) * 100}%` }} className="bg-rose-500 h-full" />
+                          <div style={{ width: `${(counts.high / total) * 100}%` }} className="bg-orange-500 h-full" />
+                          <div style={{ width: `${(counts.medium / total) * 100}%` }} className="bg-yellow-400 h-full" />
+                          <div style={{ width: `${(counts.low / total) * 100}%` }} className="bg-blue-400 h-full" />
                           <div style={{ width: `${(resolvedCount / total) * 100}%` }} className="bg-emerald-500 h-full" />
                         </div>
-
                         <div className="flex justify-between text-[10px] text-slate-400 font-medium pt-1">
-                          <span className="text-rose-500">
-                            {pendingList.length} Pending
-                          </span>
-                          <span className="text-emerald-500">
-                            {resolvedCount} Resolved
-                          </span>
+                          <span className="text-rose-500">{pendingList.length} Pending</span>
+                          <span className="text-emerald-500">{resolvedCount} Resolved</span>
                         </div>
                       </div>
 
-                      {/* --- IMPROVED ARROW BUTTON --- */}
                       <div className="absolute bottom-6 right-6">
                         <div className="w-10 h-10 rounded-full bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-300 group-hover:bg-emerald-500 group-hover:text-white group-hover:border-emerald-500 transition-all duration-300">
                           <ChevronRight className="w-6 h-6" />
@@ -248,10 +269,7 @@ export default function WasteAdmin() {
             )}
           </>
         ) : (
-          /* VIEW 2: REPORTS LIST (Drill-down with TABS) */
           <div className="animate-in slide-in-from-right duration-300">
-            
-            {/* Navigation Header */}
             <div className="flex items-center gap-4 mb-8">
               <button
                 onClick={() => { setSelectedZone(null); setActiveTab("current"); }}
@@ -260,68 +278,27 @@ export default function WasteAdmin() {
                 <ArrowLeft className="w-5 h-5" />
               </button>
               <div>
-                <h2 className="text-3xl font-black text-slate-900 tracking-tight">
-                  Zone {selectedZone.zoneId.toUpperCase()}
-                </h2>
-                <p className="text-slate-500">
-                   Manage waste collection reports
-                </p>
+                <h2 className="text-3xl font-black text-slate-900 tracking-tight">Zone {selectedZone.zoneId.toUpperCase()}</h2>
+                <p className="text-slate-500">Manage waste collection reports</p>
               </div>
             </div>
 
-            {/* TAB BUTTONS */}
             <div className="flex gap-2 mb-6 border-b border-slate-200 pb-1">
-                <button
-                    onClick={() => setActiveTab("current")}
-                    className={`px-4 py-2 rounded-t-lg text-sm font-bold flex items-center gap-2 transition-all relative top-[1px]
-                        ${activeTab === "current" 
-                            ? "bg-white text-rose-600 border border-slate-200 border-b-white" 
-                            : "text-slate-500 hover:text-slate-800 hover:bg-slate-100"}`}
-                >
-                    <AlertOctagon className="w-4 h-4" />
-                    Needs Action ({currentReports.length})
+                <button onClick={() => setActiveTab("current")} className={`px-4 py-2 rounded-t-lg text-sm font-bold flex items-center gap-2 transition-all relative top-[1px] ${activeTab === "current" ? "bg-white text-rose-600 border border-slate-200 border-b-white" : "text-slate-500 hover:text-slate-800 hover:bg-slate-100"}`}>
+                    <AlertOctagon className="w-4 h-4" /> Needs Action ({currentReports.length})
                 </button>
-                
-                <button
-                    onClick={() => setActiveTab("assigned")}
-                    className={`px-4 py-2 rounded-t-lg text-sm font-bold flex items-center gap-2 transition-all relative top-[1px]
-                        ${activeTab === "assigned" 
-                            ? "bg-white text-blue-600 border border-slate-200 border-b-white" 
-                            : "text-slate-500 hover:text-slate-800 hover:bg-slate-100"}`}
-                >
-                    <Truck className="w-4 h-4" />
-                    Assigned ({assignedReports.length})
+                <button onClick={() => setActiveTab("assigned")} className={`px-4 py-2 rounded-t-lg text-sm font-bold flex items-center gap-2 transition-all relative top-[1px] ${activeTab === "assigned" ? "bg-white text-blue-600 border border-slate-200 border-b-white" : "text-slate-500 hover:text-slate-800 hover:bg-slate-100"}`}>
+                    <Truck className="w-4 h-4" /> Assigned ({assignedReports.length})
                 </button>
-
-                <button
-                    onClick={() => setActiveTab("resolved")}
-                    className={`px-4 py-2 rounded-t-lg text-sm font-bold flex items-center gap-2 transition-all relative top-[1px]
-                        ${activeTab === "resolved" 
-                            ? "bg-white text-emerald-600 border border-slate-200 border-b-white" 
-                            : "text-slate-500 hover:text-slate-800 hover:bg-slate-100"}`}
-                >
-                    <CheckCircle2 className="w-4 h-4" />
-                    Resolved ({resolvedReports.length})
+                <button onClick={() => setActiveTab("resolved")} className={`px-4 py-2 rounded-t-lg text-sm font-bold flex items-center gap-2 transition-all relative top-[1px] ${activeTab === "resolved" ? "bg-white text-emerald-600 border border-slate-200 border-b-white" : "text-slate-500 hover:text-slate-800 hover:bg-slate-100"}`}>
+                    <CheckCircle2 className="w-4 h-4" /> Resolved ({resolvedReports.length})
                 </button>
             </div>
 
-            {/* REPORT LIST */}
             <div className="grid grid-cols-1 gap-4">
-              
               {(() => {
-                let displayReports = [];
-                let emptyMessage = "";
-                
-                if (activeTab === "current") {
-                    displayReports = currentReports;
-                    emptyMessage = "No pending reports. Great job!";
-                } else if (activeTab === "assigned") {
-                    displayReports = assignedReports;
-                    emptyMessage = "No active assignments currently.";
-                } else {
-                    displayReports = resolvedReports;
-                    emptyMessage = "No resolved reports history.";
-                }
+                let displayReports = activeTab === "current" ? currentReports : activeTab === "assigned" ? assignedReports : resolvedReports;
+                let emptyMessage = activeTab === "current" ? "No pending reports." : activeTab === "assigned" ? "No active assignments." : "No resolved history.";
 
                 if (displayReports.length === 0) {
                     return (
@@ -337,94 +314,35 @@ export default function WasteAdmin() {
                   const StatusIcon = statusBadge.icon;
 
                   return (
-                    <div
-                      key={report.id || report.reportId}
-                      className="bg-white border border-slate-200 rounded-2xl p-2 flex flex-col md:flex-row gap-6 hover:border-slate-300 transition-colors shadow-sm"
-                    >
-                      <img
-                        src={report.imageUrl}
-                        alt="Evidence"
-                        className="w-full md:w-48 h-48 md:h-auto object-cover rounded-xl bg-slate-100"
-                      />
-
+                    <div key={report.id || report.reportId} className="bg-white border border-slate-200 rounded-2xl p-2 flex flex-col md:flex-row gap-6 hover:border-slate-300 transition-colors shadow-sm">
+                      <img src={report.imageUrl} alt="Evidence" className="w-full md:w-48 h-48 md:h-auto object-cover rounded-xl bg-slate-100" />
                       <div className="py-4 pr-6 flex-1 flex flex-col">
                         <div className="flex justify-between items-start mb-2">
-                          <span
-                            className={`px-2 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider flex items-center gap-1
-                                ${report.severity === "HIGH" || report.severity === "CRITICAL" 
-                                    ? "bg-rose-100 text-rose-700 border border-rose-200" 
-                                    : "bg-slate-100 text-slate-600 border border-slate-200"}
-                              `}
-                          >
+                          <span className={`px-2 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider flex items-center gap-1 ${report.severity === "HIGH" || report.severity === "CRITICAL" ? "bg-rose-100 text-rose-700 border border-rose-200" : "bg-slate-100 text-slate-600 border border-slate-200"}`}>
                              {report.severity === "CRITICAL" && <AlertOctagon className="w-3 h-3" />}
                              {report.severity} Priority
                           </span>
-                          <span className="text-xs font-mono text-slate-400">
-                            {new Date(report.createdAt).toLocaleDateString()}
-                          </span>
+                          <span className="text-xs font-mono text-slate-400">{new Date(report.createdAt).toLocaleDateString()}</span>
                         </div>
-
-                        <h3 className="text-xl font-bold text-slate-900 mb-2">
-                          {report.title || "Untitled Report"}
-                        </h3>
-                        <p className="text-sm text-slate-500 mb-4 line-clamp-2">
-                          {report.aiAnalysis}
-                        </p>
-
+                        <h3 className="text-xl font-bold text-slate-900 mb-2">{report.title || "Untitled Report"}</h3>
+                        <p className="text-sm text-slate-500 mb-4 line-clamp-2">{report.aiAnalysis}</p>
                         <div className="bg-slate-50 p-3 rounded-lg border border-slate-100 flex items-start gap-2 mb-4">
                           <MapPin className="w-4 h-4 text-slate-400 mt-0.5 shrink-0" />
-                          <p className="text-xs text-slate-600 font-medium break-all">
-                            {report.address}
-                          </p>
+                          <p className="text-xs text-slate-600 font-medium break-all">{report.address}</p>
                         </div>
-
                         <div className="mt-auto flex gap-3">
-                          {/* 1. Status Badge */}
                           <div className={`px-4 py-2 border rounded-lg flex items-center gap-2 text-xs font-bold ${statusBadge.color}`}>
-                            <StatusIcon className="w-4 h-4" />
-                            {statusBadge.label}
+                            <StatusIcon className="w-4 h-4" /> {statusBadge.label}
                           </div>
-
-                          {/* 2. Assign Button (Only in 'current' tab) */}
                           {activeTab === 'current' && (
                             <button
-                              onClick={() =>
-                                navigate(`/assign/waste/${selectedZone.geohash}`, {
-                                  state: {
-                                    prefill: {
-                                      reportId: report.id || report._id,
-                                      title: `Fix: ${report.title || "Waste Issue"}`,
-                                      description: `Original Report ID: ${report.id || report._id}\n\nAI Analysis: ${report.aiAnalysis}`,
-                                      address: report.address,
-                                      imageUrl: report.imageUrl,
-                                      department: "waste",
-                                      reportGeohash: report.geohash,
-                                      location: report.location,
-                                      reporterEmail: report.email,
-                                      reporterUserId:report.userId,
-                                      severity:report.severity
-                                    },
-                                  },
-                                })
-                              }
+                              onClick={() => navigate(`/assign/waste/${selectedZone.geohash}`, { state: { prefill: { ...report, reportId: report.id || report._id, department: "waste" } } })}
                               className="flex-1 px-4 py-2 bg-slate-900 text-white text-xs font-bold rounded-lg hover:bg-emerald-600 transition-colors flex items-center justify-center gap-2"
-                            >
-                              Assign Team
-                            </button>
+                            > Assign Team </button>
                           )}
-
-                          {/* 3. Track Detail Button */}
-                          <button 
-                             onClick={() => navigate(`/track/${report.id || report._id}`)}
-                             className="px-4 py-2 bg-white border border-slate-200 text-slate-600 text-xs font-bold rounded-lg hover:bg-slate-50 hover:text-slate-900 flex items-center gap-2"
-                          >
-                             <ExternalLink className="w-3 h-3" />
-                             Track
+                          <button onClick={() => navigate(`/track/${report.id || report._id}`)} className="px-4 py-2 bg-white border border-slate-200 text-slate-600 text-xs font-bold rounded-lg hover:bg-slate-50 hover:text-slate-900 flex items-center gap-2">
+                             <ExternalLink className="w-3 h-3" /> Track
                           </button>
-     
-
-          
-
                         </div>
                       </div>
                     </div>

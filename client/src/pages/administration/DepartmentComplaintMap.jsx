@@ -2,14 +2,8 @@ import { GoogleMap, Marker, InfoWindow, useJsApiLoader } from "@react-google-map
 import { useEffect, useState, useMemo } from "react";
 import { useParams } from "react-router-dom";
 
-// Standard Hook for loading Maps across the app
-export const useGoogleMaps = () =>
-  useJsApiLoader({
-    id: "google-map-script",
-    googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY,
-    libraries: ["places"], 
-  });
-
+// 1. Define static objects OUTSIDE the component to prevent re-renders
+const center = { lat: 20.5937, lng: 78.9629 };
 const containerStyle = { width: "100%", height: "100vh" };
 
 // Department Icons mapping
@@ -20,6 +14,22 @@ const icons = {
   WASTE: "/icons/waste-map-report.png",
   INFRASTRUCTURE: "/icons/infra-map-report.png",
 };
+
+// Clean map options
+const mapOptions = {
+  streetViewControl: false,
+  mapTypeControl: false,
+  fullscreenControl: false,
+  zoomControl: false, 
+};
+
+// Standard Hook for loading Maps
+export const useGoogleMaps = () =>
+  useJsApiLoader({
+    id: "google-map-script",
+    googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY,
+    libraries: ["places"], 
+  });
 
 export default function DepartmentComplaintMap() {
   const { department } = useParams();
@@ -54,59 +64,64 @@ export default function DepartmentComplaintMap() {
     fetchReports();
   }, [department]);
 
-  // NEW: Calculate specific department total
+  // Calculate specific department total
   const totalInDepartment = useMemo(() => markers.length, [markers]);
 
-  if (!isLoaded) return <div className="bg-black h-screen flex items-center justify-center text-white font-bold">LOADING GOOGLE MAPS...</div>;
+  if (!isLoaded) return <div className="h-screen w-full bg-zinc-100 flex items-center justify-center animate-pulse text-gray-400 font-medium">Loading Map Data...</div>;
 
   return (
-    <div className="fixed inset-0 bg-black z-50">
-      {/* HEADER BAR */}
-      <div className="absolute top-0 left-0 right-0 h-14 bg-zinc-900 text-white flex items-center justify-between px-4 z-50 border-b border-white/10 shadow-lg">
-        <div className="flex items-center gap-4">
-            <h2 className="font-bold text-sm uppercase tracking-wider">📍 {department} Feed</h2>
-            <div className="bg-zinc-800 border border-zinc-700 px-3 py-1 rounded-full flex items-center gap-2">
-                <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
-                <span className="text-[10px] font-bold text-zinc-300">ACTIVE REPORTS: {totalInDepartment}</span>
-            </div>
+    <div className="relative w-full h-screen overflow-hidden font-sans selection:bg-blue-500 selection:text-white">
+      
+      {/* --- FLOATING DEPARTMENT CARD (Top Left) --- */}
+      <div className="absolute top-6 left-6 z-50 pointer-events-none">
+        <div className="bg-white/90 backdrop-blur-xl border border-white/20 shadow-[0_8px_30px_rgb(0,0,0,0.12)] p-4 rounded-2xl pointer-events-auto flex items-center gap-4 min-w-[260px]">
+           <div className="h-12 w-12 rounded-xl bg-gray-50 flex items-center justify-center shadow-inner border border-gray-100 p-2">
+              <img 
+                src={icons[department] || "/icons/default-map-report.png"} 
+                className="w-full h-full object-contain" 
+                alt="icon" 
+              />
+           </div>
+           
+           <div>
+              <h1 className="text-gray-900 font-black text-lg leading-tight tracking-tight capitalize">
+                {department?.toLowerCase()} Feed
+              </h1>
+              <div className="flex items-center gap-2 mt-0.5">
+                  <span className="relative flex h-2 w-2">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+                  </span>
+                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Live Monitoring</p>
+              </div>
+           </div>
+
+           <div className="ml-auto text-right pl-4 border-l border-gray-100">
+              <span className="block text-2xl font-black text-gray-900 leading-none">{totalInDepartment}</span>
+              <span className="text-[9px] text-gray-400 font-bold uppercase">Active</span>
+           </div>
         </div>
-        <button onClick={() => window.history.back()} className="bg-red-600 px-4 py-1.5 rounded-lg text-xs font-bold hover:bg-red-500 transition-colors">
-          ← BACK
+      </div>
+
+      {/* --- FLOATING EXIT BUTTON (Top Right) --- */}
+      <div className="absolute top-6 right-6 z-50">
+        <button
+          onClick={() => window.history.back()}
+          className="bg-white/90 backdrop-blur-xl border border-white/20 shadow-[0_8px_30px_rgb(0,0,0,0.12)] h-12 w-12 rounded-full flex items-center justify-center text-gray-600 hover:text-red-600 hover:scale-110 transition-all duration-300"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-5 h-5">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+          </svg>
         </button>
       </div>
 
-      {/* FLOATING DEPT SUMMARY CARD */}
-     {/* FLOATING DEPT SUMMARY CARD - Adjusted to be lower (top-32) */}
-<div className="absolute top-32 left-4 z-40">
-  <div className="bg-white/95 backdrop-blur-md p-3 rounded-xl shadow-2xl border border-gray-200 flex items-center gap-4 min-w-[180px]">
-      <div className="bg-zinc-100 p-2 rounded-lg">
-          <img 
-            src={icons[department] || "/icons/default-map-report.png"} 
-            className="w-8 h-8 object-contain" 
-            alt="icon" 
-          />
-      </div>
-      <div>
-          <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-tighter">
-            Total {department}
-          </p>
-          <p className="text-xl font-black text-zinc-900 leading-none">
-            {totalInDepartment}
-          </p>
-      </div>
-  </div>
-</div>
-
-      <div className="pt-14 h-full">
+      {/* --- MAP COMPONENT --- */}
+      <div className="w-full h-full">
         <GoogleMap 
           mapContainerStyle={containerStyle} 
-          center={{ lat: 20.5937, lng: 78.9629 }} 
+          center={center} // 2. Using the stable variable here instead of {{...}}
           zoom={5}
-          options={{
-            streetViewControl: false,
-            mapTypeControl: true,
-            fullscreenControl: false,
-          }}
+          options={mapOptions}
         >
           {markers.map((r) => (
             <Marker
@@ -114,27 +129,59 @@ export default function DepartmentComplaintMap() {
               position={{ lat: r.lat, lng: r.lng }}
               icon={{
                 url: icons[r.department] || "/icons/default-map-report.png",
-                scaledSize: new window.google.maps.Size(45, 45),
-                origin: new window.google.maps.Point(0, 0),
-                anchor: new window.google.maps.Point(22, 22),
+                scaledSize: new window.google.maps.Size(42, 42),
+                anchor: new window.google.maps.Point(21, 21),
               }}
               onClick={() => setSelected(r)}
+              animation={window.google.maps.Animation.DROP}
             />
           ))}
 
           {selected && (
             <InfoWindow 
               position={{ lat: selected.lat, lng: selected.lng }} 
-              onCloseClick={() => setSelected(null)}
+              onCloseClick={() => setSelected(null)} // This state update will no longer reload the map
+              options={{ 
+                 maxWidth: 340,
+                 disableAutoPan: false,
+                 pixelOffset: new window.google.maps.Size(0, -20)
+              }}
             >
-              <div className="p-1 max-w-[220px] text-black">
-                {selected.imageUrl && (
-                    <img src={selected.imageUrl} className="w-full h-32 object-cover rounded-md mb-2 border border-zinc-200" alt="report" />
-                )}
-                <h4 className="font-bold text-sm mb-1">{selected.title}</h4>
-                <p className="text-[11px] leading-tight text-zinc-600 mb-2">{selected.description}</p>
-                <div className="text-[9px] font-bold text-zinc-500 border-t pt-1 uppercase">
-                  {selected.address}
+              <div className="w-[260px] font-sans">
+                {/* Image Area */}
+                <div className="relative h-36 w-full rounded-xl overflow-hidden shadow-inner bg-gray-50">
+                   {selected.imageUrl ? (
+                      <img src={selected.imageUrl} className="w-full h-full object-cover" alt="Incident" />
+                   ) : (
+                      <div className="w-full h-full flex items-center justify-center bg-gray-100 text-gray-400 text-xs font-medium">
+                         No Image
+                      </div>
+                   )}
+                   <div className="absolute top-2 left-2">
+                      <span className="bg-black/60 backdrop-blur-md text-white text-[10px] font-bold px-2 py-1 rounded-md border border-white/10 shadow-sm">
+                         {selected.department}
+                      </span>
+                   </div>
+                </div>
+
+                {/* Content Area */}
+                <div className="pt-3 pb-1">
+                   <h3 className="text-base font-bold text-gray-900 leading-tight mb-1">{selected.title}</h3>
+                   <p className="text-xs text-gray-500 leading-relaxed line-clamp-2 mb-3">
+                      {selected.description}
+                   </p>
+
+                   <div className="flex items-center gap-2 bg-gray-50 p-2 rounded-lg border border-gray-100">
+                      <div className="bg-white p-1 rounded-full shadow-sm">
+                        <svg className="w-3 h-3 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                        </svg>
+                      </div>
+                      <span className="text-[10px] font-semibold text-gray-600 truncate flex-1">
+                        {selected.address || "Location unavailable"}
+                      </span>
+                   </div>
                 </div>
               </div>
             </InfoWindow>
