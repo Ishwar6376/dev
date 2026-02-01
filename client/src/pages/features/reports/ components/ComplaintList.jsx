@@ -115,7 +115,7 @@ export default function ComplaintList() {
         <button 
           onClick={(e) => {
             e.stopPropagation(); 
-            navigate('/dashboard/history');
+            navigate('/reports/me');
           }}
           className="w-full py-3 text-[11px] font-bold uppercase tracking-wider text-zinc-600 hover:text-zinc-400 transition-colors border-t border-white/5 mt-1"
         >

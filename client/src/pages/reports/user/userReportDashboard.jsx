@@ -12,7 +12,9 @@ import {
   CalendarDays,
   Check,
   UserCheck,
-  HardHat
+  HardHat,
+  LayoutDashboard,
+  Activity
 } from "lucide-react";
 import { api } from "@/lib/api";
 import { useAuth0 } from "@auth0/auth0-react";
@@ -78,7 +80,6 @@ const UserReportsDashboard = ({ userId }) => {
   }, [getAccessTokenSilently, user]);
 
   const handleMarkResolved = async (reportId) => {
-    // Determine the action message based on current status (optional UX polish)
     const report = reports.find(r => r.id === reportId);
     const isWaiting = report?.status === "WAITING_APPROVAL";
     
@@ -93,13 +94,11 @@ const UserReportsDashboard = ({ userId }) => {
             audience: import.meta.env.VITE_AUTH0_AUDIENCE,
         });
 
-        // Backend call to update status to 'RESOLVED'
         await api.put(`/api/reports/resolve`, 
             { reportId }, 
             { headers: { Authorization: `Bearer ${token}` }}
         );
 
-        // Optimistic Update
         setReports((prev) => prev.map((r) => 
             r.id === reportId ? { ...r, status: "RESOLVED" } : r
         ));
@@ -114,7 +113,6 @@ const UserReportsDashboard = ({ userId }) => {
     if (!window.confirm("Are you sure you want to delete this report?")) return;
     try {
       setReports((prev) => prev.filter((r) => r.id !== reportId));
-      // await api.delete(`/api/reports/${reportId}`); 
     } catch (error) {
       alert("Failed to delete report");
     }
@@ -123,11 +121,8 @@ const UserReportsDashboard = ({ userId }) => {
   const getFilteredReports = () => {
     return reports.filter((report) => {
       if (filterCategory !== "ALL" && report.type !== filterCategory) return false;
-      
-      // Strict filtering based on your workflow
       if (filterStatus === "RESOLVED") return report.status === "RESOLVED";
-      if (filterStatus === "PENDING") return report.status !== "RESOLVED"; // Includes VERIFIED, ASSIGNED, WAITING_APPROVAL
-      
+      if (filterStatus === "PENDING") return report.status !== "RESOLVED";
       return true;
     });
   };
@@ -138,27 +133,27 @@ const UserReportsDashboard = ({ userId }) => {
     switch (status) {
         case "RESOLVED":
             return (
-                <span className="flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-700">
-                    <CheckCircle size={14} /> Resolved
+                <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-bold tracking-wide uppercase bg-emerald-100 text-emerald-700 border border-emerald-200">
+                    <CheckCircle size={12} /> Resolved
                 </span>
             );
         case "WAITING_APPROVAL":
             return (
-                <span className="flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-purple-100 text-purple-700 border border-purple-200">
-                    <UserCheck size={14} /> Waiting Your Approval
+                <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-bold tracking-wide uppercase bg-purple-100 text-purple-700 border border-purple-200 animate-pulse">
+                    <UserCheck size={12} /> Needs Approval
                 </span>
             );
         case "ASSIGNED":
             return (
-                <span className="flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-blue-100 text-blue-700">
-                    <HardHat size={14} /> Assigned
+                <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-bold tracking-wide uppercase bg-blue-100 text-blue-700 border border-blue-200">
+                    <HardHat size={12} /> Assigned
                 </span>
             );
         case "VERIFIED":
         default:
             return (
-                <span className="flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-yellow-100 text-yellow-700">
-                    <Clock size={14} /> Verified / Pending
+                <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-bold tracking-wide uppercase bg-amber-100 text-amber-700 border border-amber-200">
+                    <Clock size={12} /> Pending
                 </span>
             );
     }
@@ -166,51 +161,77 @@ const UserReportsDashboard = ({ userId }) => {
 
   const getTypeIcon = (type) => {
     switch (type) {
-      case "WASTE": return <Trash className="text-orange-500" size={18} />;
-      case "INFRA": return <Building2 className="text-blue-500" size={18} />;
-      case "WATER": return <Droplets className="text-cyan-500" size={18} />;
-      default: return <AlertTriangle size={18} />;
+      case "WASTE": return <Trash className="text-orange-600" size={20} />;
+      case "INFRA": return <Building2 className="text-blue-600" size={20} />;
+      case "WATER": return <Droplets className="text-cyan-600" size={20} />;
+      default: return <AlertTriangle size={20} />;
     }
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 p-4 md:p-8 font-sans">
-      <div className="max-w-6xl mx-auto">
+    <div className="min-h-screen bg-slate-50/50 p-6 md:p-10 font-sans">
+      <div className="max-w-7xl mx-auto space-y-8">
         
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-800">My Reports</h1>
-          <p className="text-gray-500 mt-1">Track the lifecycle of your submitted issues.</p>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-          <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
-            <div className="text-gray-500 text-sm font-medium">Total Submitted</div>
-            <div className="text-2xl font-bold text-gray-800">{reports.length}</div>
-          </div>
-          <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
-            <div className="text-gray-500 text-sm font-medium">Pending Resolution</div>
-            <div className="text-2xl font-bold text-orange-600">
-              {reports.filter(r => r.status !== "RESOLVED").length}
-            </div>
-          </div>
-          <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
-            <div className="text-gray-500 text-sm font-medium">Resolved</div>
-            <div className="text-2xl font-bold text-green-600">
-              {reports.filter(r => r.status === "RESOLVED").length}
-            </div>
+        {/* Header */}
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+          <div>
+            <h1 className="text-3xl font-bold text-slate-900 tracking-tight flex items-center gap-2">
+               <LayoutDashboard className="text-slate-400" /> My Dashboard
+            </h1>
+            <p className="text-slate-500 mt-2 text-lg">
+                Track and manage your submitted community reports.
+            </p>
           </div>
         </div>
 
-        <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 mb-6 flex flex-col md:flex-row justify-between items-center gap-4">
-          <div className="flex bg-gray-100 p-1 rounded-lg">
+        {/* Stats Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 flex items-center justify-between hover:border-blue-200 transition-colors">
+            <div>
+                <div className="text-slate-500 text-sm font-semibold uppercase tracking-wider mb-1">Total Reports</div>
+                <div className="text-3xl font-bold text-slate-900">{reports.length}</div>
+            </div>
+            <div className="h-12 w-12 bg-slate-100 rounded-full flex items-center justify-center text-slate-500">
+                <LayoutDashboard size={24} />
+            </div>
+          </div>
+          <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 flex items-center justify-between hover:border-orange-200 transition-colors">
+            <div>
+                <div className="text-slate-500 text-sm font-semibold uppercase tracking-wider mb-1">Pending</div>
+                <div className="text-3xl font-bold text-orange-600">
+                  {reports.filter(r => r.status !== "RESOLVED").length}
+                </div>
+            </div>
+            <div className="h-12 w-12 bg-orange-50 rounded-full flex items-center justify-center text-orange-500">
+                <Clock size={24} />
+            </div>
+          </div>
+          <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 flex items-center justify-between hover:border-emerald-200 transition-colors">
+            <div>
+                <div className="text-slate-500 text-sm font-semibold uppercase tracking-wider mb-1">Resolved</div>
+                <div className="text-3xl font-bold text-emerald-600">
+                  {reports.filter(r => r.status === "RESOLVED").length}
+                </div>
+            </div>
+            <div className="h-12 w-12 bg-emerald-50 rounded-full flex items-center justify-center text-emerald-500">
+                <CheckCircle size={24} />
+            </div>
+          </div>
+        </div>
+
+        {/* Filters and Controls */}
+        <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 flex flex-col lg:flex-row justify-between items-center gap-6">
+          
+          {/* Status Tabs */}
+          <div className="bg-slate-100/80 p-1.5 rounded-xl flex gap-1 w-full lg:w-auto overflow-x-auto">
             {["ALL", "PENDING", "RESOLVED"].map((tab) => (
               <button
                 key={tab}
                 onClick={() => setFilterStatus(tab)}
-                className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${
+                className={`px-6 py-2 rounded-lg text-sm font-semibold transition-all duration-200 whitespace-nowrap flex-1 lg:flex-none text-center ${
                   filterStatus === tab 
-                    ? "bg-white text-gray-800 shadow-sm" 
-                    : "text-gray-500 hover:text-gray-700"
+                    ? "bg-white text-slate-900 shadow-sm ring-1 ring-slate-200" 
+                    : "text-slate-500 hover:text-slate-700 hover:bg-slate-200/50"
                 }`}
               >
                 {tab.charAt(0) + tab.slice(1).toLowerCase()}
@@ -218,130 +239,157 @@ const UserReportsDashboard = ({ userId }) => {
             ))}
           </div>
 
-          <div className="flex items-center gap-2 overflow-x-auto w-full md:w-auto">
-            <span className="text-gray-400 text-sm flex items-center gap-1">
-              <Filter size={14} /> Type:
+          {/* Type Filter */}
+          <div className="flex items-center gap-3 w-full lg:w-auto overflow-x-auto pb-2 lg:pb-0">
+            <span className="text-slate-400 text-xs font-bold uppercase tracking-widest flex items-center gap-2">
+              <Filter size={14} /> Category
             </span>
-            {["ALL", "WASTE", "INFRA", "WATER"].map((cat) => (
-              <button
-                key={cat}
-                onClick={() => setFilterCategory(cat)}
-                className={`px-3 py-1 border rounded-full text-xs font-semibold whitespace-nowrap transition-colors ${
-                  filterCategory === cat
-                    ? "bg-gray-800 text-white border-gray-800"
-                    : "bg-white text-gray-600 border-gray-300 hover:bg-gray-50"
-                }`}
-              >
-                {cat}
-              </button>
-            ))}
+            <div className="flex gap-2">
+                {["ALL", "WASTE", "INFRA", "WATER"].map((cat) => (
+                <button
+                    key={cat}
+                    onClick={() => setFilterCategory(cat)}
+                    className={`px-4 py-1.5 border rounded-full text-xs font-bold transition-all whitespace-nowrap ${
+                    filterCategory === cat
+                        ? "bg-slate-900 text-white border-slate-900 shadow-md"
+                        : "bg-white text-slate-600 border-slate-200 hover:border-slate-300 hover:bg-slate-50"
+                    }`}
+                >
+                    {cat}
+                </button>
+                ))}
+            </div>
           </div>
         </div>
 
+        {/* Content Area */}
         {loading ? (
-          <div className="text-center py-20 text-gray-400">Loading reports...</div>
+          <div className="flex flex-col items-center justify-center py-32 text-slate-400 gap-4">
+            <div className="animate-spin h-8 w-8 border-4 border-slate-300 border-t-blue-600 rounded-full"></div>
+            <p>Loading your reports...</p>
+          </div>
         ) : filteredData.length === 0 ? (
-          <div className="text-center py-20 bg-white rounded-xl border border-dashed border-gray-300">
-            <p className="text-gray-500">No reports found matching your filters.</p>
+          <div className="flex flex-col items-center justify-center py-24 bg-white rounded-2xl border-2 border-dashed border-slate-200">
+            <div className="h-16 w-16 bg-slate-50 rounded-full flex items-center justify-center text-slate-400 mb-4">
+                <Filter size={24} />
+            </div>
+            <h3 className="text-lg font-semibold text-slate-700">No reports found</h3>
+            <p className="text-slate-500">Try adjusting your filters to see more results.</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {filteredData.map((report) => (
               <div 
                 key={report.id} 
-                className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-shadow group flex flex-col h-full"
+                className="group bg-white rounded-2xl shadow-sm border border-slate-200 hover:shadow-lg hover:border-blue-200/50 transition-all duration-300 flex flex-col h-full overflow-hidden"
               >
-                {report.imageUrl && (
-                    <div className="h-40 w-full overflow-hidden bg-gray-100 relative">
-                        <img 
-                            src={report.imageUrl} 
-                            alt={report.title} 
-                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                        />
-                        <div className="absolute top-2 right-2 shadow-sm">
-                            {getStatusBadge(report.status)}
-                        </div>
-                    </div>
-                )}
-
-                {!report.imageUrl && (
-                    <div className="p-4 flex justify-between items-start pb-0">
-                        <div className="flex items-center gap-3">
-                            <div className="p-2 bg-gray-50 rounded-lg">
+                {/* Image / Header Section */}
+                <div className="relative h-48 w-full bg-slate-100 overflow-hidden">
+                    {report.imageUrl ? (
+                        <>
+                            <img 
+                                src={report.imageUrl} 
+                                alt={report.title} 
+                                className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                            />
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-60"></div>
+                        </>
+                    ) : (
+                        <div className="w-full h-full flex flex-col items-center justify-center bg-slate-50">
+                            <div className="p-4 bg-white rounded-full shadow-sm mb-2">
                                 {getTypeIcon(report.type)}
                             </div>
-                            <div>
-                                <h3 className="font-semibold text-gray-800 text-sm uppercase tracking-wide">
-                                    {report.type}
-                                </h3>
-                            </div>
-                        </div>
-                        {getStatusBadge(report.status)}
-                    </div>
-                )}
-
-                <div className="p-4 flex-1 flex flex-col">
-                  <h3 className="font-bold text-gray-800 mb-1 line-clamp-1">
-                      {report.title || "Untitled Report"}
-                  </h3>
-                  <p className="text-gray-600 text-sm line-clamp-3 mb-4 flex-1">
-                    {report.description || report.aiAnalysis || "No details provided."}
-                  </p>
-                  
-                  <div className="space-y-2 mt-auto">
-                    {report.address && (
-                        <div className="flex items-start gap-2 text-xs text-gray-500 bg-gray-50 p-2 rounded">
-                            <MapPin size={14} className="mt-0.5 shrink-0" />
-                            <span className="line-clamp-2">{report.address}</span>
+                            <span className="text-slate-400 text-xs font-medium">No Image Provided</span>
                         </div>
                     )}
                     
-                    <div className="flex items-center justify-between text-xs text-gray-400 px-1">
-                        <div className="flex items-center gap-1">
-                            <CalendarDays size={12} />
+                    {/* Status Badge Positioned Absolutely */}
+                    <div className="absolute top-3 right-3 shadow-sm z-10">
+                        {getStatusBadge(report.status)}
+                    </div>
+                    
+                    {/* Title overlaid on image if image exists, otherwise separate */}
+                    {report.imageUrl && (
+                        <div className="absolute bottom-3 left-4 right-4 text-white z-10">
+                             <div className="flex items-center gap-2 mb-1 opacity-90">
+                                {getTypeIcon(report.type)}
+                                <span className="text-xs font-bold uppercase tracking-wider">{report.type}</span>
+                            </div>
+                        </div>
+                    )}
+                </div>
+
+                {/* Body Section */}
+                <div className="p-5 flex-1 flex flex-col">
+                  {/* If no image, show category header here */}
+                  {!report.imageUrl && (
+                      <div className="flex items-center gap-2 mb-3 text-slate-500">
+                         {getTypeIcon(report.type)}
+                         <span className="text-xs font-bold uppercase tracking-wider">{report.type}</span>
+                      </div>
+                  )}
+
+                  <h3 className="font-bold text-slate-900 text-lg mb-2 leading-tight">
+                      {report.title || "Untitled Report"}
+                  </h3>
+                  
+                  <p className="text-slate-600 text-sm leading-relaxed mb-6 line-clamp-3">
+                    {report.description || report.aiAnalysis || <span className="italic text-slate-400">No additional details provided.</span>}
+                  </p>
+                  
+                  {/* Metadata Block */}
+                  <div className="mt-auto space-y-3">
+                    <div className="bg-slate-50 rounded-lg p-3 flex items-start gap-3 border border-slate-100">
+                        <MapPin size={16} className="text-slate-400 shrink-0 mt-0.5" />
+                        <span className="text-xs text-slate-600 font-medium line-clamp-2">
+                            {report.address || "Location unavailable"}
+                        </span>
+                    </div>
+
+                    <div className="flex items-center justify-between text-xs text-slate-400 px-1">
+                        <div className="flex items-center gap-1.5">
+                            <CalendarDays size={14} />
                             <span>{formatDate(report.createdAt)}</span>
                         </div>
-                        {report.geohash && <span>Hash: {report.geohash}</span>}
+                        {report.geohash && <span className="font-mono text-[10px] bg-slate-100 px-1.5 py-0.5 rounded">ID: {report.geohash.substring(0,6)}...</span>}
                     </div>
                   </div>
+                </div>
 
-                  <div className="flex items-center justify-between mt-4 pt-4 border-t border-gray-50">
-                    <span className={`text-xs font-bold px-2 py-1 rounded ${
-                      report.severity === "CRITICAL" ? "bg-red-50 text-red-600" :
-                      report.severity === "HIGH" ? "bg-orange-50 text-orange-600" :
-                      "bg-blue-50 text-blue-600"
+                {/* Footer / Actions */}
+                <div className="p-4 border-t border-slate-100 bg-slate-50/50 flex items-center justify-between gap-3">
+                    <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full border ${
+                      report.severity === "CRITICAL" ? "bg-red-50 text-red-600 border-red-100" :
+                      report.severity === "HIGH" ? "bg-orange-50 text-orange-600 border-orange-100" :
+                      "bg-blue-50 text-blue-600 border-blue-100"
                     }`}>
-                      {report.severity || "NORMAL"}
+                      {report.severity || "NORMAL"} Priority
                     </span>
 
-                    <div className="flex gap-2">
-                        {/* Logic: Users can approve if status is WAITING_APPROVAL.
-                            (Optional: Can also allow manual resolve from VERIFIED/ASSIGNED if user fixes it themselves)
-                        */}
+                    <div className="flex items-center gap-2">
                         {report.status !== "RESOLVED" && (
                             <button 
                                 onClick={() => handleMarkResolved(report.id)}
-                                className={`flex items-center gap-1 p-2 rounded-full transition-all ${
+                                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all shadow-sm ${
                                     report.status === "WAITING_APPROVAL" 
-                                    ? "bg-green-600 text-white px-3 hover:bg-green-700 shadow-md"
-                                    : "text-gray-400 hover:text-green-600 hover:bg-green-50"
+                                    ? "bg-green-600 text-white hover:bg-green-700 hover:shadow-md ring-2 ring-green-100"
+                                    : "bg-white text-slate-600 border border-slate-200 hover:border-green-500 hover:text-green-600"
                                 }`}
                                 title="Mark as Resolved"
                             >
-                                <Check size={18} />
-                                {report.status === "WAITING_APPROVAL" && <span className="text-xs font-bold">Confirm Fix</span>}
+                                <Check size={14} />
+                                {report.status === "WAITING_APPROVAL" ? "Confirm Fix" : "Resolve"}
                             </button>
                         )}
 
                         <button 
                           onClick={() => handleDelete(report.id)}
-                          className="text-gray-400 hover:text-red-500 hover:bg-red-50 p-2 rounded-full transition-colors"
+                          className="p-2 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors border border-transparent hover:border-red-100"
                           title="Delete Report"
                         >
-                          <Trash2 size={18} />
+                          <Trash2 size={16} />
                         </button>
                     </div>
-                  </div>
                 </div>
               </div>
             ))}
